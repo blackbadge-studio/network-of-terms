@@ -176,6 +176,49 @@ describe('Query against an endpoint', () => {
     expect(response.result).toBeInstanceOf(Terms);
   });
 
+  it('caps the timeout at the source’s own timeoutMs from the catalog', async () => {
+    stubEndpoint(
+      (signal) =>
+        new Promise((_resolve, reject) =>
+          signal.addEventListener('abort', () => reject(signal.reason)),
+        ),
+    );
+    const slowSource = new SparqlDistribution(
+      distribution.iri,
+      distribution.endpoint,
+      distribution.searchQuery,
+      distribution.lookupQuery,
+      distribution.features,
+      50,
+    );
+    const started = Date.now();
+    const response = await endpointService.search(
+      'nachtwacht',
+      QueryMode.RAW,
+      dataset,
+      slowSource,
+      10,
+      10_000,
+    );
+    expect(response.result).toBeInstanceOf(TimeoutError);
+    expect((response.result as TimeoutError).timeoutMs).toBe(50);
+    expect(Date.now() - started).toBeLessThan(5_000);
+  });
+
+  it('keeps the caller’s timeout when it is smaller than the source’s', () => {
+    const source = new SparqlDistribution(
+      distribution.iri,
+      distribution.endpoint,
+      distribution.searchQuery,
+      distribution.lookupQuery,
+      [],
+      5_000,
+    );
+    expect(source.effectiveTimeoutMs(1_000)).toBe(1_000);
+    expect(source.effectiveTimeoutMs(10_000)).toBe(5_000);
+    expect(distribution.effectiveTimeoutMs(10_000)).toBe(10_000);
+  });
+
   it('times out while waiting for a response', async () => {
     stubEndpoint(
       (signal) =>
@@ -420,10 +463,13 @@ describe('substituteBindings', () => {
   // Each binding used to be substituted in its own pass over the query, so a term inserted by an
   // earlier binding was searched again by the later ones.
   it('does not substitute into a term it just substituted', () => {
-    const query = substituteBindings('FILTER(?query) ?s schema:dataset ?datasetUri', {
-      query: dataFactory.literal('?datasetUri'),
-      datasetUri: dataFactory.namedNode('https://example.com/dataset'),
-    });
+    const query = substituteBindings(
+      'FILTER(?query) ?s schema:dataset ?datasetUri',
+      {
+        query: dataFactory.literal('?datasetUri'),
+        datasetUri: dataFactory.namedNode('https://example.com/dataset'),
+      },
+    );
 
     expect(query).toBe(
       'FILTER("?datasetUri") ?s schema:dataset <https://example.com/dataset>',

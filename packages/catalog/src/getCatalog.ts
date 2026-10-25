@@ -12,7 +12,8 @@ import {
   SparqlDistribution,
 } from '@netwerk-digitaal-erfgoed/network-of-terms-query';
 import { fileURLToPath } from 'url';
-import { ldkit, rdf, schema } from 'ldkit/namespaces';
+import { ldkit, rdf, schema, xsd } from 'ldkit/namespaces';
+import { vtn } from './vocabulary.js';
 import { createLens, type IQueryEngine, type Options } from 'ldkit';
 import type RDF from '@rdfjs/types';
 import { dirname, join } from 'node:path';
@@ -118,6 +119,11 @@ const distributionSchema = {
     '@schema': {
       encodingFormat: schema.encodingFormat,
       contentUrl: schema.contentUrl,
+      timeoutMs: {
+        '@id': vtn.timeoutMs,
+        '@type': xsd.integer,
+        '@optional': true,
+      },
       potentialAction: {
         '@array': true,
         '@id': schema.potentialAction,
@@ -235,6 +241,7 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
                   action.types.includes(schema.FindAction),
                 )[0].query!,
                 features,
+                dataset.distribution!.timeoutMs ?? undefined,
               );
             })(),
           ],

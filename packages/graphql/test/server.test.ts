@@ -733,6 +733,17 @@ describe('Server', () => {
     );
   });
 
+  it('reports health with the loaded catalog and status service state', async () => {
+    const response = await httpServer.inject({ method: 'GET', url: '/health' });
+    expect(response.statusCode).toEqual(200);
+    const body = response.json();
+    expect(body.status).toEqual('ok');
+    expect(body.version).toMatch(/^\d+\.\d+\.\d+/);
+    expect(body.catalog.sources).toEqual(catalog.datasets.length);
+    expect(body.statusService.url).toEqual(config.STATUS_SERVICE_URL);
+    expect(typeof body.statusService.reachable).toEqual('boolean');
+  });
+
   it('responds to GraphQL playground requests', async () => {
     const response = await httpServer.inject({
       method: 'GET',

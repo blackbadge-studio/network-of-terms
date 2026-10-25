@@ -441,6 +441,7 @@ function source(
       url: feature.url?.toString() ?? null,
     })),
     status: statusClient?.getStatus(dataset.iri) ?? null,
+    timeoutMs: distribution.timeoutMs ?? null,
   };
 }
 

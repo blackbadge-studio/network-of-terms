@@ -26,6 +26,16 @@ export class StatusClient {
     this.maxAgeMs = maxAgeMs;
   }
 
+  /** When the status service was last read successfully, or null if never. */
+  get lastRefreshedAt(): Date | null {
+    return this.lastRefresh === 0 ? null : new Date(this.lastRefresh);
+  }
+
+  /** Number of sources the last successful read reported on. */
+  get size(): number {
+    return this.cache.size;
+  }
+
   getStatus(datasetIri: string): SourceStatus | null {
     // Trigger async refresh if stale (doesn't block)
     if (this.isStale()) {

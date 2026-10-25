@@ -16,6 +16,32 @@ import { EnvSchemaData } from 'env-schema';
 import mercuriusLogging from 'mercurius-logging';
 import fastifyAccepts from '@fastify/accepts';
 import { StatusClient } from './status.js';
+import { readFileSync, existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+/**
+ * Version of this package, read from package.json next to the bundle (production image) or one
+ * level up (development).
+ */
+function packageVersion(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  for (const candidate of [
+    join(here, 'package.json'),
+    join(here, '..', 'package.json'),
+  ]) {
+    if (existsSync(candidate)) {
+      try {
+        return (
+          JSON.parse(readFileSync(candidate, 'utf-8')).version ?? 'unknown'
+        );
+      } catch {
+        return 'unknown';
+      }
+    }
+  }
+  return 'unknown';
+}
 
 export async function server(
   catalog: Catalog,
@@ -55,6 +81,29 @@ export async function server(
     url: '/',
     handler: (req, reply) => {
       void reply.redirect('/graphiql');
+    },
+  });
+
+  // Health check for liveness/readiness probes and central monitoring: the API is up when it can
+  // answer this, the catalog is loaded, and the status service was reached at least once (the
+  // latter is informational: a stale status service degrades `Source.status`, not search).
+  const version = packageVersion();
+  server.route({
+    method: 'GET',
+    url: '/health',
+    handler: (req, reply) => {
+      const lastStatusRefresh = statusClient.lastRefreshedAt;
+      void reply.send({
+        status: 'ok',
+        version,
+        catalog: { sources: catalog.datasets.length },
+        statusService: {
+          url: config.STATUS_SERVICE_URL,
+          reachable: lastStatusRefresh !== null,
+          lastRefreshedAt: lastStatusRefresh?.toISOString() ?? null,
+          sources: statusClient.size,
+        },
+      });
     },
   });
 

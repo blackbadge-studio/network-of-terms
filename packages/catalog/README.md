@@ -250,6 +250,7 @@ state. The person’s full names are not part of that: they stay on `skos:prefLa
   the role, as it would on the term. RKDartists states an
   occupation’s IRI and its Dutch and English labels as parallel values with nothing pairing them,
   which is why its occupations are literals: pairing them would assign every label to every IRI.
+
 - One `UNION` branch per property, since each is multi-valued on its own: a person with seven
   occupations, five alternate names and seven alignments is 19 rows that way and 245 as
   `OPTIONAL`s.
@@ -267,3 +268,27 @@ Plain `FILTER(CONTAINS(…))` scans every candidate literal on each request. **P
   Some Virtuoso services, such as KB’s (`data.bibliotheken.nl`) and RKD’s on TriplyDB, silently return no results for that triple-pattern form; use the function form `FILTER(<bif:contains>(?label, ?virtuosoQuery))` there. Other TriplyDB services, such as Adamlink’s and Muziekweb’s, accept both.
 - **Wikidata** – the `wikibase:mwapi` service with `mwapi:search` (titles) or `mwapi:srsearch` (full text). See the [Wikidata MWAPI manual](https://www.mediawiki.org/wiki/Wikidata_Query_Service/User_Manual/MWAPI).
 
+## Vlaams Termennetwerk extensions
+
+The Flemish catalog adds a small vocabulary, `vtn:` (`https://termennetwerk.meemoo.be/ns#`), for
+settings that schema.org does not cover. Declare it in the dataset's context:
+
+```json
+"@context": ["https://schema.org", { "vtn": "https://termennetwerk.meemoo.be/ns#" }]
+```
+
+| Property        | On             | Meaning                                                                                                                                                                                                                                                                                |
+| --------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vtn:timeoutMs` | `DataDownload` | Per-source timeout in milliseconds. The query engine waits at most the smaller of this value and the request's `timeoutMs` for this source, so a slow source never holds up a federated search longer than its administrator allows. Exposed as `Source.timeoutMs` in the GraphQL API. |
+
+Example:
+
+```json
+"distribution": [{
+  "@type": "DataDownload",
+  "contentUrl": "https://example.org/sparql",
+  "encodingFormat": "application/sparql-query",
+  "vtn:timeoutMs": 4000,
+  "potentialAction": [...]
+}]
+```

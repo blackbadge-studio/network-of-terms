@@ -13,6 +13,11 @@
     inLanguage: [Language]!
     mainEntityOfPage: [String]!
     status: SourceStatus
+    """
+    Timeout in milliseconds that the source's administrator set for it, if any. A query waits at
+    most the smaller of this value and the request's own timeoutMs for this source.
+    """
+    timeoutMs: Int
   }
 
   """

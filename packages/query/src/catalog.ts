@@ -128,13 +128,27 @@ export class Organization {
 }
 
 export class SparqlDistribution {
+  /**
+   * @param timeoutMs Optional per-source timeout from the catalog (`vtn:timeoutMs`). The query
+   *   engine waits at most the smaller of this value and the timeout the caller passes, so a
+   *   source that is known to be slow or flaky never holds up a federated search for longer than
+   *   its administrator allows.
+   */
   constructor(
     readonly iri: IRI,
     readonly endpoint: IRI,
     readonly searchQuery: string,
     readonly lookupQuery: string,
     readonly features: Feature[] = [],
+    readonly timeoutMs?: number,
   ) {}
+
+  /** The timeout to use for this source given what the caller allows. */
+  public effectiveTimeoutMs(requestedTimeoutMs: number): number {
+    return this.timeoutMs === undefined
+      ? requestedTimeoutMs
+      : Math.min(requestedTimeoutMs, this.timeoutMs);
+  }
 
   public hasFeature(feature: FeatureType) {
     return this.features.some((value: Feature) => value.type === feature);

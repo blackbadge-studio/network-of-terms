@@ -93,6 +93,28 @@ try {
     return reply.type(contentType).send(stream);
   });
 
+  // Health check for probes and central monitoring. Reading the latest observations also proves
+  // the database connection works, which is what this service depends on.
+  fastify.get('/health', async (request, reply) => {
+    try {
+      const latest = await store.getLatest();
+      return reply.send({
+        status: 'ok',
+        version: packageJson.version,
+        monitors: monitors.length,
+        observations: latest.size,
+        pollingIntervalSeconds: config.POLLING_INTERVAL_SECONDS,
+      });
+    } catch (error) {
+      logger.error({ error }, 'Health check failed');
+      return reply.status(503).send({
+        status: 'error',
+        version: packageJson.version,
+        message: 'Observation store unavailable',
+      });
+    }
+  });
+
   // Handle graceful shutdown
   const shutdown = async () => {
     logger.info('Shutting down...');

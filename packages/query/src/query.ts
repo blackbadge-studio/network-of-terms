@@ -38,7 +38,7 @@ export class Error {
 export class TimeoutError extends Error {
   constructor(
     override readonly distribution: Distribution,
-    timeoutMs: number,
+    readonly timeoutMs: number,
   ) {
     super(distribution, `Source timed out after ${timeoutMs}ms`);
   }
@@ -233,6 +233,8 @@ export class QueryTermsService {
         .max(config.MAX_QUERY_TIMEOUT)
         .default(config.DEFAULT_QUERY_TIMEOUT),
     );
+    // A source may cap the timeout in the catalog; the caller's value is only an upper bound.
+    timeoutMs = distribution.effectiveTimeoutMs(timeoutMs);
 
     const timer = new Hoek.Bench();
     // Extract HTTP credentials if the distribution URL contains any.

@@ -181,6 +181,22 @@ describe('Catalog', () => {
     ).toEqual('https://username:password@gtaa.apis.beeldengeluid.nl/sparql');
   });
 
+  it('reads the per-source timeout (vtn:timeoutMs) from the distribution', async () => {
+    const catalog = await getCatalog(
+      resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/timeout/'),
+    );
+    const slow = catalog
+      .getDatasetByIri('https://example.org/slow')!
+      .getSparqlDistribution()!;
+    const fast = catalog
+      .getDatasetByIri('https://example.org/fast')!
+      .getSparqlDistribution()!;
+    expect(slow.timeoutMs).toBe(4000);
+    expect(slow.effectiveTimeoutMs(10_000)).toBe(4000);
+    expect(fast.timeoutMs).toBeUndefined();
+    expect(fast.effectiveTimeoutMs(10_000)).toBe(10_000);
+  });
+
   it('returns all languages', async () => {
     expect(catalog.getLanguages().sort()).toEqual(['en', 'fy', 'nl']);
   });
