@@ -46,6 +46,32 @@ voor wat schema.org niet biedt. SHACL en de catalogus-lens worden mee uitgebreid
 
 ## Bronnen
 
+### Wat het bestek vraagt (§3.1 B en §3.4.7)
+
+Een eigen Vlaamse broncatalogus, los van de Nederlandse, met als eerste set
+**minstens** deze tien bronnen – vijf Vlaamse en vijf internationale:
+
+| Vlaamse bronnen                    | Internationale bronnen              |
+| ---------------------------------- | ----------------------------------- |
+| Visual Name Authority              | Getty vocabulaires (AAT, ULAN, TGN) |
+| ODIS                               | Wikidata                            |
+| Directory of Belgian Photographers | GeoNames                            |
+| European Fashion Thesaurus         | RKDartists                          |
+| Thesaurus Onroerend Erfgoed        | VIAF                                |
+
+Per bron moeten we aangeven of aansluiting via de bestaande catalogus- en
+querywerking kan, welke configuratie nodig is en of er bijkomende mapping
+vereist is. Bronnen die nog niet als LOD via SPARQL beschikbaar zijn, mogen
+enkel als kandidaat of voorbereidend traject beschreven worden (§3.4.6); een
+technische partner of gedeelde infrastructuur mag de LOD-publicatie verzorgen.
+De overige Nederlandse bronnen vallen niet onder de opdracht ("structureel
+beheer van Nederlandse bronnen" is buiten scope, §3.2), maar de tests moeten
+aantonen dat gewenste Nederlandse functionaliteit niet onbedoeld verloren gaat
+(§3.7). RKDartists hoort dus expliciet bij de Vlaamse catalogus; Adamlink, GTAA,
+CHT en de andere Nederland-specifieke bronnen niet.
+
+### Stand per bron uit de bronanalyse
+
 Resultaat van de bronanalyse (25 oktober 2026, publieke endpoints live
 geverifieerd). Let op: de Query Engine stuurt SPARQL-queries rechtstreeks naar
 een endpoint (Comunica is uit de engine gehaald), dus een bron zonder
@@ -67,14 +93,16 @@ van een RDF-dump – de route die het bestek al voorziet (F9.13).
 
 ### Kandidaat met intake (nog geen LOD/SPARQL)
 
-| #   | Bron                                                                           | Bronhouder                         | Types                              | Toestand                                                                                             | Voorgestelde route                                                                                        |
-| --- | ------------------------------------------------------------------------------ | ---------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 9   | ODIS (±154 000 publieke records)                                               | KADOC-KU Leuven / ODIS vzw (LIBIS) | person, organization, event        | geen publieke LOD; ODIS 3.0 (Virtuoso + JSON-API) loopt tot 2027; 42 000 records in Wikidata (P2372) | partnerroute KADOC/LIBIS; tussentijds via Wikidata (#4); licentie CC BY-NC-SA is een hergebruikvoorbehoud |
-| 10  | MoMu Thesaurus (Opentheso; opgeschoonde Europeana Fashion Thesaurus, 11 talen) | MoMu                               | concept                            | enkel Opentheso REST-API (SKOS JSON-LD per concept, ARK-URI's); geen SPARQL                          | periodieke SKOS-export → gehoste endpoint; licentie bevestigen met MoMu                                   |
-| –   | Visual Name Authority                                                          | meemoo + 24 partners               | person                             | prototypefase tot september 2026, geen dataset/endpoint                                              | partnerroute meemoo; zodra er een export is, aansluiten op QAS                                            |
-| –   | Directory of Belgian Photographers (±8 600)                                    | FOMU                               | person, organization               | AtoM-bètasite, geen API gedocumenteerd; 1 035 in Wikidata (P8696)                                    | AtoM-export (EAC) → gehoste endpoint, in overleg met FOMU; tussentijds via Wikidata                       |
-| –   | BALaT personen & instellingen → MetaBelgica                                    | KIK-IRPA, KBR, KMKG, KMSKB         | person, organization, event, place | MetaBelgica-Wikibase (>1 M entiteiten) nog niet publiek; resultaten 18 november 2026                 | wachten op de Wikibase query service; contact KIK-IRPA                                                    |
-| –   | GeoNames (BE/NL-subset)                                                        | GeoNames                           | place                              | RDF-dump + JSON-API, geen SPARQL                                                                     | gehoste endpoint vanuit de dump, als Wikidata-plaatsen niet volstaan                                      |
+| #   | Bron                                                                           | Bronhouder                         | Types                              | Toestand                                                                                             | Voorgestelde route                                                                                                                                        |
+| --- | ------------------------------------------------------------------------------ | ---------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 9   | ODIS (±154 000 publieke records)                                               | KADOC-KU Leuven / ODIS vzw (LIBIS) | person, organization, event        | geen publieke LOD; ODIS 3.0 (Virtuoso + JSON-API) loopt tot 2027; 42 000 records in Wikidata (P2372) | partnerroute KADOC/LIBIS; tussentijds via Wikidata (#4); licentie CC BY-NC-SA is een hergebruikvoorbehoud                                                 |
+| 10  | MoMu Thesaurus (Opentheso; opgeschoonde Europeana Fashion Thesaurus, 11 talen) | MoMu                               | concept                            | enkel Opentheso REST-API (SKOS JSON-LD per concept, ARK-URI's); geen SPARQL                          | periodieke SKOS-export → gehoste endpoint; licentie bevestigen met MoMu                                                                                   |
+| –   | Visual Name Authority                                                          | meemoo + 24 partners               | person                             | prototypefase tot september 2026, geen dataset/endpoint                                              | partnerroute meemoo; zodra er een export is, aansluiten op QAS                                                                                            |
+| –   | Directory of Belgian Photographers (±8 600)                                    | FOMU                               | person, organization               | AtoM-bètasite, geen API gedocumenteerd; 1 035 in Wikidata (P8696)                                    | AtoM-export (EAC) → gehoste endpoint, in overleg met FOMU; tussentijds via Wikidata                                                                       |
+| –   | BALaT personen & instellingen → MetaBelgica                                    | KIK-IRPA, KBR, KMKG, KMSKB         | person, organization, event, place | MetaBelgica-Wikibase (>1 M entiteiten) nog niet publiek; resultaten 18 november 2026                 | wachten op de Wikibase query service; contact KIK-IRPA                                                                                                    |
+| 11  | GeoNames (BE/NL-subset) – verplicht volgens bestek                             | GeoNames                           | place                              | RDF-dump + JSON-API, geen SPARQL                                                                     | gehoste endpoint vanuit de dump (BE/NL-subset), CC BY 4.0                                                                                                 |
+| 12  | VIAF – verplicht volgens bestek                                                | OCLC                               | person, organization               | geen SPARQL; RDF per cluster, SRU/JSON-API, maandelijkse dumps (zeer groot)                          | tussentijds via Wikidata (`wdt:P214`, VIAF-ID als exactMatch op elk persoonsresultaat); native: gehoste endpoint vanuit een gefilterde dump, of kandidaat |
+| 13  | RKDartists – verplicht volgens bestek                                          | RKD                                | person                             | SPARQL, NDE-catalogusentry en sjablonen hergebruiken                                                 | ongewijzigd overnemen                                                                                                                                     |
 
 Risico's voor meemoo: (1) Getty-endpoint instabiel; (2) de meeste Vlaamse
 persoonsbronnen hebben nog geen LOD, Wikidata is de praktische brug; (3)
