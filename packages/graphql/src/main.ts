@@ -14,7 +14,11 @@ try {
     await httpServer.close();
     await shutdownInstrumentation();
   });
-  await httpServer.listen({ port: 3123, host: '0.0.0.0' });
+  // PORT is set by the hosting platform (Laravel Cloud, Kubernetes); '::' listens on IPv6 and IPv4.
+  await httpServer.listen({
+    port: Number(process.env.PORT) || 3123,
+    host: process.env.HOST || '::',
+  });
 } catch (err) {
   console.error(err);
   process.exitCode = 1;

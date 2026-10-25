@@ -116,7 +116,7 @@ try {
   }
 
   // Start HTTP server
-  await fastify.listen({ port: config.PORT, host: '0.0.0.0' });
+  await fastify.listen({ port: config.PORT, host: process.env.HOST || '::' });
 } catch (error) {
   logger.error({ error }, 'Failed to start monitoring service');
   process.exit(1);

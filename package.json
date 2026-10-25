@@ -5,7 +5,10 @@
     "./packages/*"
   ],
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "build": "nx run-many -t build -p graphql,status",
+    "start": "node packages/graphql/dist/main.js",
+    "start:status": "node packages/status/dist/main.js"
   },
   "devDependencies": {
     "@commitlint/cli": "20.4.2",
