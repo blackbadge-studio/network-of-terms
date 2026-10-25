@@ -1,6 +1,7 @@
 import fastify, {
   FastifyInstance,
   FastifyLoggerOptions,
+  FastifyReply,
   FastifyRequest,
 } from 'fastify';
 import mercurius from 'mercurius';
@@ -106,6 +107,50 @@ export async function server(
       });
     },
   });
+
+  // The status service runs next to this server without a public port, so its LDES (stream
+  // metadata at `/`, observations at `/observations/latest`) is served here under `/status`.
+  // Accept and the response content type pass through, so content negotiation keeps working.
+  const statusBase = (config.STATUS_SERVICE_URL as string).replace(/\/$/, '');
+  server.route({
+    method: 'GET',
+    url: '/status/*',
+    handler: async (req, reply) => {
+      const path = '/' + ((req.params as { '*': string })['*'] ?? '');
+      await proxyStatus(path, req, reply);
+    },
+  });
+  server.route({
+    method: 'GET',
+    url: '/status',
+    handler: async (req, reply) => {
+      await proxyStatus('/', req, reply);
+    },
+  });
+  async function proxyStatus(
+    path: string,
+    req: FastifyRequest,
+    reply: FastifyReply,
+  ) {
+    const query = req.url.includes('?')
+      ? req.url.slice(req.url.indexOf('?'))
+      : '';
+    try {
+      const upstream = await fetch(statusBase + path + query, {
+        headers: { Accept: req.headers.accept ?? '*/*' },
+        signal: AbortSignal.timeout(10_000),
+      });
+      const contentType = upstream.headers.get('content-type');
+      if (contentType) {
+        void reply.header('Content-Type', contentType);
+      }
+      void reply.header('Cache-Control', 'public, max-age=60');
+      return reply.status(upstream.status).send(await upstream.text());
+    } catch (error) {
+      req.log.warn({ err: error }, 'Status service unreachable');
+      return reply.status(502).send({ error: 'Status service unreachable' });
+    }
+  }
 
   // Redirect /playground to /graphiql for BC.
   server.route({

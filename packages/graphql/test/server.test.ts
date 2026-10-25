@@ -785,6 +785,29 @@ describe('Server', () => {
     expect(typeof body.statusService.reachable).toEqual('boolean');
   });
 
+  it('proxies the status service LDES under /status', async () => {
+    const nock = (await import('nock')).default;
+    const base = config.STATUS_SERVICE_URL as string;
+    nock(base)
+      .get('/observations/latest')
+      .reply(200, '<a> <b> <c> .', { 'content-type': 'text/turtle' })
+      .get('/')
+      .reply(200, '{"@id":"stream"}', {
+        'content-type': 'application/ld+json',
+      });
+    const latest = await httpServer.inject({
+      method: 'GET',
+      url: '/status/observations/latest',
+      headers: { accept: 'text/turtle' },
+    });
+    expect(latest.statusCode).toEqual(200);
+    expect(latest.headers['content-type']).toContain('text/turtle');
+    expect(latest.body).toEqual('<a> <b> <c> .');
+    const root = await httpServer.inject({ method: 'GET', url: '/status' });
+    expect(root.statusCode).toEqual(200);
+    expect(root.body).toContain('stream');
+  });
+
   it('responds to GraphQL playground requests', async () => {
     const response = await httpServer.inject({
       method: 'GET',
