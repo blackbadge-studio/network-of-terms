@@ -7,3 +7,4 @@ export * from './search/query-mode.js';
 export * from './distributions.js';
 export * from './helpers/logger.js';
 export { shutdownInstrumentation } from './instrumentation.js';
+export * from './result-type.js';

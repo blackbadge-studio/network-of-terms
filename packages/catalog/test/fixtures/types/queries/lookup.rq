@@ -1,0 +1,2 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+CONSTRUCT { ?s a skos:Concept ; skos:prefLabel ?label } WHERE { VALUES ?s { ?uris } ?s skos:prefLabel ?label }

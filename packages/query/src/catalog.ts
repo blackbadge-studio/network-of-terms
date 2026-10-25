@@ -93,6 +93,13 @@ export class Catalog {
 export type StringDictionary = Record<string, string>;
 
 export class Dataset {
+  /**
+   * @param resultTypes The central result types this source yields (`vtn:resultType` in the
+   *   catalog). Empty when the source does not declare them: it is then never skipped by a type
+   *   filter, and each result's type is derived from its `rdf:type` alone.
+   * @param typeMappings How the source's own `rdf:type`s map to central result types
+   *   (`vtn:typeMapping`); they take precedence over the built-in mapping.
+   */
   constructor(
     readonly iri: IRI,
     readonly name: StringDictionary,
@@ -104,7 +111,22 @@ export class Dataset {
     readonly creators: [Organization],
     readonly distributions: [Distribution],
     readonly alternateName: StringDictionary = {},
+    readonly resultTypes: ResultType[] = [],
+    readonly typeMappings: TypeMapping[] = [],
   ) {}
+
+  /**
+   * Whether a type filter should query this source at all. A source that declares its result
+   * types is skipped when none of them is requested; one that declares nothing is always queried
+   * and filtered per result.
+   */
+  public mayProvideResultTypes(types: ResultType[]): boolean {
+    return (
+      types.length === 0 ||
+      this.resultTypes.length === 0 ||
+      this.resultTypes.some((type) => types.includes(type))
+    );
+  }
 
   public getSparqlDistribution(): Distribution | undefined {
     return this.distributions.find(
@@ -165,6 +187,36 @@ export class Feature {
 export enum FeatureType {
   RECONCILIATION = 'https://reconciliation-api.github.io/specs/latest/',
   GENRE_FILTER = 'genre-filter',
+}
+
+/**
+ * The central result types of the Vlaams Termennetwerk, which every source's own classes map to
+ * so that a client can tell a person from a place without knowing the source's data model.
+ */
+export enum ResultType {
+  CONCEPT = 'concept',
+  PERSON = 'person',
+  ORGANIZATION = 'organization',
+  PLACE = 'place',
+  EVENT = 'event',
+}
+
+export const resultTypeFromString = (value: string): ResultType => {
+  const type = Object.values(ResultType).find((type) => type === value);
+  if (type === undefined) {
+    throw new Error(
+      `Unknown result type "${value}"; expected one of ${Object.values(ResultType).join(', ')}`,
+    );
+  }
+  return type;
+};
+
+/** A source-specific rule: terms typed `sourceType` are of central type `resultType`. */
+export class TypeMapping {
+  constructor(
+    readonly sourceType: IRI,
+    readonly resultType: ResultType,
+  ) {}
 }
 
 /**

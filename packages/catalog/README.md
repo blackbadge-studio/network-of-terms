@@ -277,13 +277,20 @@ settings that schema.org does not cover. Declare it in the dataset's context:
 "@context": ["https://schema.org", { "vtn": "https://termennetwerk.meemoo.be/ns#" }]
 ```
 
-| Property        | On             | Meaning                                                                                                                                                                                                                                                                                |
-| --------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vtn:timeoutMs` | `DataDownload` | Per-source timeout in milliseconds. The query engine waits at most the smaller of this value and the request's `timeoutMs` for this source, so a slow source never holds up a federated search longer than its administrator allows. Exposed as `Source.timeoutMs` in the GraphQL API. |
+| Property          | On             | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vtn:resultType`  | `Dataset`      | The central result types the source yields: `concept`, `person`, `organization`, `place`, `event`. A source that declares them is skipped by a `types` filter that asks for none of them; a source that declares a single type gives that type to every term whose `rdf:type` says nothing more specific. Exposed as `Source.resultTypes`.                                                                                                      |
+| `vtn:typeMapping` | `Dataset`      | Rules `{ "vtn:sourceType": { "@id": "<class IRI>" }, "vtn:resultType": "person" }` mapping the source's own classes to central result types. They take precedence over the built-in mapping of `schema:Person`, `schema:Organization`, `schema:Place` and `schema:Event` (both schema.org namespaces) and `foaf:Person`/`foaf:Organization`. Every term exposes the derived `resultType` next to its unchanged `rdf:type`s in `additionalType`. |
+| `vtn:timeoutMs`   | `DataDownload` | Per-source timeout in milliseconds. The query engine waits at most the smaller of this value and the request's `timeoutMs` for this source, so a slow source never holds up a federated search longer than its administrator allows. Exposed as `Source.timeoutMs` in the GraphQL API.                                                                                                                                                          |
 
 Example:
 
 ```json
+"vtn:resultType": ["person", "organization"],
+"vtn:typeMapping": [
+  { "vtn:sourceType": { "@id": "https://example.org/ns#Artist" }, "vtn:resultType": "person" },
+  { "vtn:sourceType": { "@id": "https://example.org/ns#Studio" }, "vtn:resultType": "organization" }
+],
 "distribution": [{
   "@type": "DataDownload",
   "contentUrl": "https://example.org/sparql",

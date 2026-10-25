@@ -24,6 +24,11 @@ import {
   TermsResponse,
   TermsResult,
   TimeoutError,
+  ResultType,
+  Terms,
+  additionalTypes,
+  matchesResultTypes,
+  resultTypeOf,
 } from '@netwerk-digitaal-erfgoed/network-of-terms-query';
 import * as RDF from '@rdfjs/types';
 import { dereferenceGenre } from '@netwerk-digitaal-erfgoed/network-of-terms-catalog';
@@ -61,16 +66,27 @@ async function queryTerms(
     limit: number;
     timeoutMs: number;
     languages: string[];
+    types?: string[];
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: any,
 ): Promise<unknown> {
+  const catalog: Catalog = context.catalog;
+  const types = (args.types ?? []).map(resultTypeFromEnum);
+  // A source that declares its result types and offers none of the requested ones is skipped.
+  const sources = args.sources.filter((source) => {
+    const dataset = catalog.getDatasetByIri(source);
+    return dataset === undefined || dataset.mayProvideResultTypes(types);
+  });
+  if (sources.length === 0) {
+    return [];
+  }
   const service = new DistributionsService({
     logger: context.app.log,
-    catalog: context.catalog,
+    catalog,
   });
   const results = await service.queryAll({
-    sources: args.sources,
+    sources,
     genres: args.genres,
     query: args.query,
     queryMode: QueryMode[args.queryMode as keyof typeof QueryMode],
@@ -78,7 +94,7 @@ async function queryTerms(
     timeoutMs: args.timeoutMs,
   });
   return resolveTermsResponse(
-    results,
+    results.map((response) => filterByResultTypes(response, types, catalog)),
     context.catalog,
     [...(args.languages ?? []), context.catalogLanguage][0],
     args.languages,
@@ -110,6 +126,10 @@ async function lookupTerms(object: any, args: any, context: any) {
   ][0];
 
   return results.map((result: LookupQueryResult) => {
+    const dataset =
+      result.distribution instanceof SourceNotFoundError
+        ? undefined
+        : datasetOf(context.catalog, result.distribution);
     return {
       uri: result.uri,
       source:
@@ -126,8 +146,8 @@ async function lookupTerms(object: any, args: any, context: any) {
       result:
         result.result instanceof Term
           ? args.languages === undefined
-            ? mapToTerm(result.result, ['nl'])
-            : mapToTranslatedTerm(result.result, args.languages)
+            ? mapToTerm(result.result, ['nl'], dataset)
+            : mapToTranslatedTerm(result.result, args.languages, dataset)
           : result.result,
       responseTimeMs: result.responseTimeMs,
     };
@@ -158,14 +178,17 @@ function resolveTermsResponse(
       };
     }
 
+    const dataset = catalog.getDatasetByDistributionIri(
+      response.result.distribution.iri,
+    )!;
     const terms = response.result.terms.map((term) =>
-      mapToTerm(term, resultLanguages),
+      mapToTerm(term, resultLanguages, dataset),
     );
 
     return {
       source: source(
         response.result.distribution,
-        catalog.getDatasetByDistributionIri(response.result.distribution.iri)!,
+        dataset,
         catalogLanguage,
         statusClient,
       ),
@@ -174,7 +197,7 @@ function resolveTermsResponse(
           ? { terms }
           : new TranslatedTerms(
               response.result.terms.map((term) =>
-                mapToTranslatedTerm(term, resultLanguages),
+                mapToTranslatedTerm(term, resultLanguages, dataset),
               ),
             ),
       responseTimeMs: response.responseTimeMs,
@@ -187,10 +210,46 @@ class TranslatedTerms {
   constructor(readonly terms: object[]) {}
 }
 
-function mapToTranslatedTerm(term: Term, languages: string[]) {
+const datasetOf = (catalog: Catalog, distribution: Distribution) =>
+  catalog.getDatasetByDistributionIri(distribution.iri);
+
+/** GraphQL enum names are upper case; the query package uses the lower-case catalog values. */
+const resultTypeFromEnum = (name: string): ResultType =>
+  ResultType[name as keyof typeof ResultType];
+const resultTypeToEnum = (type: ResultType): string =>
+  Object.entries(ResultType).find(([, value]) => value === type)![0];
+
+/** Keep only the terms of the requested result types; errors pass through untouched. */
+function filterByResultTypes(
+  response: TermsResponse,
+  types: ResultType[],
+  catalog: Catalog,
+): TermsResponse {
+  if (types.length === 0 || !(response.result instanceof Terms)) {
+    return response;
+  }
+  const dataset = datasetOf(catalog, response.result.distribution);
+  return new TermsResponse(
+    new Terms(
+      response.result.distribution,
+      response.result.terms.filter((term) =>
+        matchesResultTypes(term, types, dataset),
+      ),
+    ),
+    response.responseTimeMs,
+  );
+}
+
+function mapToTranslatedTerm(
+  term: Term,
+  languages: string[],
+  dataset?: Dataset,
+) {
   return {
     type: 'TranslatedTerm',
     uri: term.id!.value,
+    resultType: resultTypeToEnum(resultTypeOf(term, dataset)),
+    additionalType: additionalTypes(term),
     prefLabel: filterLiteralsByLanguage(term.prefLabels, languages),
     altLabel: filterLiteralsByLanguage(term.altLabels, languages),
     hiddenLabel: filterLiteralsByLanguage(term.hiddenLabels, languages),
@@ -347,9 +406,11 @@ type LanguageSelector = (
   sets: RDF.Literal[][],
 ) => (literals: RDF.Literal[]) => RDF.Literal[];
 
-function mapToTerm(term: Term, languages: string[]) {
+function mapToTerm(term: Term, languages: string[], dataset?: Dataset) {
   return {
     uri: term.id!.value,
+    resultType: resultTypeToEnum(resultTypeOf(term, dataset)),
+    additionalType: additionalTypes(term),
     prefLabel: literalValues(term.prefLabels, languages),
     altLabel: literalValues(term.altLabels, languages),
     hiddenLabel: literalValues(term.hiddenLabels, languages),
@@ -441,6 +502,7 @@ function source(
       url: feature.url?.toString() ?? null,
     })),
     status: statusClient?.getStatus(dataset.iri) ?? null,
+    resultTypes: dataset.resultTypes.map(resultTypeToEnum),
     timeoutMs: distribution.timeoutMs ?? null,
   };
 }

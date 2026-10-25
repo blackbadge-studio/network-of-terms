@@ -14,6 +14,11 @@
     mainEntityOfPage: [String]!
     status: SourceStatus
     """
+    The central result types this source yields, as its administrator declared them. Empty when
+    the source declares none; its results are then typed from their rdf:type alone.
+    """
+    resultTypes: [ResultType]!
+    """
     Timeout in milliseconds that the source's administrator set for it, if any. A query waits at
     most the smaller of this value and the request's own timeoutMs for this source.
     """
@@ -46,6 +51,19 @@
   }
   
   """
+  The central result types of the Vlaams Termennetwerk. Every term is mapped to exactly one, from
+  the source's type mapping or the well-known schema.org classes, so a client can keep a person
+  out of a field that expects a concept without knowing the source's data model.
+  """
+  enum ResultType {
+    CONCEPT
+    PERSON
+    ORGANIZATION
+    PLACE
+    EVENT
+  }
+
+  """
   A genre (category) that a source provides terms about.
   """
   type Genre {
@@ -66,6 +84,10 @@
   """
   type Term {
     uri: ID!
+    "The central result type of this term (concept, person, organization, place or event)."
+    resultType: ResultType!
+    "The term's rdf:type IRIs exactly as the source states them, for clients that need more than the central result type."
+    additionalType: [String]!
     prefLabel: [String]!
     altLabel: [String]!
     hiddenLabel: [String]!
@@ -114,6 +136,9 @@
       
       "Maximum number of terms to return."
       limit: Int = 100,
+
+      "Only return terms of these result types. Sources that declare result types and offer none of the requested ones are not queried at all; other sources are queried and filtered per term."
+      types: [ResultType!],
 
       "Timeout period in milliseconds that we wait for sources to respond."
       timeoutMs: Int = 10000
@@ -174,6 +199,10 @@
   """
   type TranslatedTerm {
     uri: ID!
+    "The central result type of this term (concept, person, organization, place or event)."
+    resultType: ResultType!
+    "The term's rdf:type IRIs exactly as the source states them, for clients that need more than the central result type."
+    additionalType: [String]!
     prefLabel: [LanguageString]!
     altLabel: [LanguageString]!
     hiddenLabel: [LanguageString]!

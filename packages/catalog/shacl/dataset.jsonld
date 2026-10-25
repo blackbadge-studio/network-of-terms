@@ -95,6 +95,31 @@
           },
           "sh:uniqueLang": true,
           "sh:minCount": 1
+        },
+        {
+          "sh:path": {
+            "@id": "vtn:resultType"
+          },
+          "sh:in": {
+            "@list": [
+              "concept",
+              "person",
+              "organization",
+              "place",
+              "event"
+            ]
+          },
+          "sh:description": "Central result types this source yields. Omit when the source does not know; then each result's type is derived from its rdf:type."
+        },
+        {
+          "sh:path": {
+            "@id": "vtn:typeMapping"
+          },
+          "sh:node": "vtn:TypeMappingShape",
+          "sh:nodeKind": {
+            "@id": "sh:BlankNodeOrIRI"
+          },
+          "sh:description": "Rules mapping the source's own classes to central result types."
         }
       ]
     },
@@ -257,6 +282,38 @@
         {
           "sh:path": {
             "@id": "schema:urlTemplate"
+          },
+          "sh:minCount": 1,
+          "sh:maxCount": 1
+        }
+      ]
+    },
+    {
+      "@id": "vtn:TypeMappingShape",
+      "@type": "sh:NodeShape",
+      "sh:property": [
+        {
+          "sh:path": {
+            "@id": "vtn:sourceType"
+          },
+          "sh:nodeKind": {
+            "@id": "sh:IRI"
+          },
+          "sh:minCount": 1,
+          "sh:maxCount": 1
+        },
+        {
+          "sh:path": {
+            "@id": "vtn:resultType"
+          },
+          "sh:in": {
+            "@list": [
+              "concept",
+              "person",
+              "organization",
+              "place",
+              "event"
+            ]
           },
           "sh:minCount": 1,
           "sh:maxCount": 1

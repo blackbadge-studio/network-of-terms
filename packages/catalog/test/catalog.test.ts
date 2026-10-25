@@ -197,6 +197,34 @@ describe('Catalog', () => {
     expect(fast.effectiveTimeoutMs(10_000)).toBe(10_000);
   });
 
+  it('reads result types and type mappings (vtn:resultType, vtn:typeMapping)', async () => {
+    const catalog = await getCatalog(
+      resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/types/'),
+    );
+    const artists = catalog.getDatasetByIri('https://example.org/artists')!;
+    expect(artists.resultTypes).toEqual(['person', 'organization']);
+    expect(
+      artists.typeMappings.map((mapping) => [
+        mapping.sourceType,
+        mapping.resultType,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        ['https://example.org/ns#Artist', 'person'],
+        ['https://example.org/ns#Studio', 'organization'],
+      ]),
+    );
+    expect(artists.typeMappings).toHaveLength(2);
+    // Datasets without declarations default to nothing declared.
+    const plain = (
+      await getCatalog(
+        resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/timeout/'),
+      )
+    ).getDatasetByIri('https://example.org/fast')!;
+    expect(plain.resultTypes).toEqual([]);
+    expect(plain.typeMappings).toEqual([]);
+  });
+
   it('returns all languages', async () => {
     expect(catalog.getLanguages().sort()).toEqual(['en', 'fy', 'nl']);
   });

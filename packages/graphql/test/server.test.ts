@@ -733,6 +733,47 @@ describe('Server', () => {
     );
   });
 
+  it('types every term and filters on result type', async () => {
+    const search = (types?: string) =>
+      query(
+        `
+        query {
+          terms(sources: ["https://data.rkd.nl/rkdartists"], query: "rembrandt"${types ? `, types: [${types}]` : ''}) {
+            source { uri resultTypes }
+            result {
+              ... on Terms { terms { uri resultType additionalType } }
+            }
+          }
+        }
+      `,
+      );
+    const all = await search();
+    const terms = all.data.terms[0].result.terms;
+    expect(terms.length).toBeGreaterThan(0);
+    const persons = terms.filter(
+      (term: { resultType: string }) => term.resultType === 'PERSON',
+    );
+    expect(persons.length).toBeGreaterThan(0);
+    expect(persons[0].additionalType).toContain('https://schema.org/Person');
+    expect(persons[0].additionalType).toContain(
+      'http://www.w3.org/2004/02/skos/core#Concept',
+    );
+    // The test catalog declares no result types, so the source is queried and filtered per term.
+    expect(all.data.terms[0].source.resultTypes).toEqual([]);
+
+    const onlyPersons = await search('PERSON');
+    expect(onlyPersons.data.terms[0].result.terms).toHaveLength(persons.length);
+    const onlyPlaces = await search('PLACE');
+    expect(
+      onlyPlaces.data.terms[0].result.terms.every(
+        (term: { resultType: string }) => term.resultType === 'PLACE',
+      ),
+    ).toBe(true);
+    expect(onlyPlaces.data.terms[0].result.terms.length).toBeLessThan(
+      terms.length,
+    );
+  });
+
   it('reports health with the loaded catalog and status service state', async () => {
     const response = await httpServer.inject({ method: 'GET', url: '/health' });
     expect(response.statusCode).toEqual(200);

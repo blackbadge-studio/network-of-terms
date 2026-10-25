@@ -10,6 +10,8 @@ import {
   FeatureType,
   Organization,
   SparqlDistribution,
+  TypeMapping,
+  resultTypeFromString,
 } from '@netwerk-digitaal-erfgoed/network-of-terms-query';
 import { fileURLToPath } from 'url';
 import { ldkit, rdf, schema, xsd } from 'ldkit/namespaces';
@@ -159,6 +161,29 @@ const distributionSchema = {
   },
 } as const;
 
+// Result types and type mappings get their own lens: both are multi-valued, so they would
+// multiply against the dataset's other multi-valued properties in the dataset lens.
+const typesSchema = {
+  '@type': schema.Dataset,
+  resultTypes: {
+    '@id': vtn.resultType,
+    '@array': true,
+    '@optional': true,
+  },
+  typeMappings: {
+    '@id': vtn.typeMapping,
+    '@array': true,
+    '@optional': true,
+    '@schema': {
+      sourceType: {
+        '@id': vtn.sourceType,
+        '@type': ldkit.IRI,
+      },
+      resultType: vtn.resultType,
+    },
+  },
+} as const;
+
 const engine = new QueryEngine();
 
 export async function fromStore(store: RDF.Store): Promise<Catalog> {
@@ -181,11 +206,27 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
       dataset.distribution,
     ]),
   );
+  const types = new Map(
+    (await createLens(typesSchema, options).find()).map((dataset) => [
+      dataset.$id,
+      {
+        resultTypes: (dataset.resultTypes ?? []).map(resultTypeFromString),
+        typeMappings: (dataset.typeMappings ?? []).map(
+          (mapping) =>
+            new TypeMapping(
+              mapping.sourceType,
+              resultTypeFromString(mapping.resultType),
+            ),
+        ),
+      },
+    ]),
+  );
   const datasets = (await createLens(datasetSchema, options).find()).map(
     (dataset) => ({
       ...dataset,
       creator: creators.get(dataset.$id),
       distribution: distributions.get(dataset.$id),
+      types: types.get(dataset.$id),
     }),
   );
 
@@ -246,6 +287,8 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
             })(),
           ],
           dataset.alternateName,
+          dataset.types?.resultTypes ?? [],
+          dataset.types?.typeMappings ?? [],
         ),
     ),
   );
