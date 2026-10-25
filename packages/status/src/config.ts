@@ -39,7 +39,32 @@ interface Env {
   LDES_BASE_URL: string;
 }
 
-export const config: Env = envSchema({
+const env: Env = envSchema({
   dotenv: true,
   schema,
 });
+
+/**
+ * Default to `sslmode=prefer` when the connection string does not say
+ * otherwise: postgres.js disables TLS unless the URL asks for it, and managed
+ * Postgres (e.g. Laravel Cloud's Neon-backed clusters) refuses plain
+ * connections with SQLSTATE 28000 "connection is insecure". `prefer` still
+ * falls back to plaintext for a local Postgres without TLS.
+ */
+export function withDefaultSslMode(databaseUrl: string): string {
+  let url: URL;
+  try {
+    url = new URL(databaseUrl);
+  } catch {
+    return databaseUrl;
+  }
+  if (!url.searchParams.has('sslmode') && !url.searchParams.has('ssl')) {
+    url.searchParams.set('sslmode', 'prefer');
+  }
+  return url.toString();
+}
+
+export const config: Env = {
+  ...env,
+  DATABASE_URL: withDefaultSslMode(env.DATABASE_URL),
+};

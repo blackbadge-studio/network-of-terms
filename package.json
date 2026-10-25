@@ -8,7 +8,7 @@
     "build": "nx run-many -t build -p graphql,status",
     "prepare": "husky",
     "start": "node packages/graphql/dist/main.js",
-    "start:status": "node packages/status/dist/main.js"
+    "start:status": "PORT=${STATUS_PORT:-3001} node packages/status/dist/main.js"
   },
   "devDependencies": {
     "@commitlint/cli": "20.4.2",

@@ -5,7 +5,7 @@ One Cloud application runs both services from the repository root:
 | Process                             | Command                | Port                  |
 | ----------------------------------- | ---------------------- | --------------------- |
 | Web (GraphQL API)                   | `npm start`            | `PORT` (set by Cloud) |
-| Background process (status monitor) | `npm run start:status` | `3000`, internal only |
+| Background process (status monitor) | `npm run start:status` | `3001`, internal only |
 
 ## Application settings
 
@@ -18,6 +18,7 @@ One Cloud application runs both services from the repository root:
 
 - Start command: `npm start`
 - Background process: `npm run start:status`
+  Cloud sets `PORT=3000` for every process in the container, so the root `start:status` script overrides it to `STATUS_PORT` (default `3001`) to keep the monitor off the web server's port.
 - Resources: attach a Postgres database (Cloud injects `DATABASE_URL`, which the status service reads).
 
 ## Environment variables
@@ -25,7 +26,7 @@ One Cloud application runs both services from the repository root:
 | Variable                   | Value                      |
 | -------------------------- | -------------------------- |
 | `TRUST_PROXY`              | `true`                     |
-| `STATUS_SERVICE_URL`       | `http://127.0.0.1:3000`    |
+| `STATUS_SERVICE_URL`       | `http://127.0.0.1:3001`    |
 | `LDES_BASE_URL`            | `https://<app-url>/status` |
 | `POLLING_INTERVAL_SECONDS` | `300`                      |
 | `LOG_LEVEL`                | `info`                     |
