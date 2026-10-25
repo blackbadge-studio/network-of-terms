@@ -2,9 +2,9 @@
 
 One Cloud application runs both services from the repository root:
 
-| Process | Command | Port |
-| --- | --- | --- |
-| Web (GraphQL API) | `npm start` | `PORT` (set by Cloud) |
+| Process                             | Command                | Port                  |
+| ----------------------------------- | ---------------------- | --------------------- |
+| Web (GraphQL API)                   | `npm start`            | `PORT` (set by Cloud) |
 | Background process (status monitor) | `npm run start:status` | `3000`, internal only |
 
 ## Application settings
@@ -22,13 +22,13 @@ One Cloud application runs both services from the repository root:
 
 ## Environment variables
 
-| Variable | Value |
-| --- | --- |
-| `TRUST_PROXY` | `true` |
-| `STATUS_SERVICE_URL` | `http://127.0.0.1:3000` |
-| `LDES_BASE_URL` | `https://<app-url>/status` |
-| `POLLING_INTERVAL_SECONDS` | `300` |
-| `LOG_LEVEL` | `info` |
+| Variable                   | Value                      |
+| -------------------------- | -------------------------- |
+| `TRUST_PROXY`              | `true`                     |
+| `STATUS_SERVICE_URL`       | `http://127.0.0.1:3000`    |
+| `LDES_BASE_URL`            | `https://<app-url>/status` |
+| `POLLING_INTERVAL_SECONDS` | `300`                      |
+| `LOG_LEVEL`                | `info`                     |
 
 `GTAA_CREDENTIALS` is only needed for the Dutch GTAA sources; leave it unset and those sources fail, which is fine for the POC.
 
