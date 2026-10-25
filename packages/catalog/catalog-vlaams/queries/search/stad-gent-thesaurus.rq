@@ -1,0 +1,60 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+# The Ghent thesaurus is published as an LDES: every concept version is its own resource
+# (<stable URI>/<timestamp>) that points to the stable concept with dcterms:isVersionOf. The
+# Termennetwerk returns the stable URI and reads the fields from the latest version.
+CONSTRUCT {
+    ?uri a skos:Concept ;
+        skos:prefLabel ?prefLabel ;
+        skos:scopeNote ?scopeNote ;
+        skos:broader ?broader_uri ;
+        skos:narrower ?narrower_uri ;
+        skos:exactMatch ?exactMatch_uri .
+    ?broader_uri skos:prefLabel ?broader_prefLabel .
+    ?narrower_uri skos:prefLabel ?narrower_prefLabel .
+}
+WHERE {
+    GRAPH <http://stad.gent/ldes/thesaurus> {
+        {
+            SELECT DISTINCT ?uri WHERE {
+                ?match a skos:Concept ;
+                    dcterms:isVersionOf ?uri ;
+                    skos:prefLabel ?label .
+                FILTER(CONTAINS(LCASE(STR(?label)), LCASE(?query)))
+            }
+            #LIMIT#
+        }
+        {
+            SELECT ?uri (MAX(?generated) AS ?latest) WHERE {
+                ?any dcterms:isVersionOf ?uri ;
+                    prov:generatedAtTime ?generated .
+            }
+            GROUP BY ?uri
+        }
+        ?version dcterms:isVersionOf ?uri ;
+            prov:generatedAtTime ?latest .
+
+        # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
+        # see “One UNION branch per multi-valued property” in the catalog README.
+        {
+            { ?version skos:prefLabel ?prefLabel . }
+            UNION { ?version skos:scopeNote ?scopeNote . }
+            UNION {
+                ?version skos:broader ?broader_uri .
+                ?broader_version dcterms:isVersionOf ?broader_uri ;
+                    skos:prefLabel ?broader_prefLabel .
+            }
+            UNION {
+                ?version skos:narrower ?narrower_uri .
+                ?narrower_version dcterms:isVersionOf ?narrower_uri ;
+                    skos:prefLabel ?narrower_prefLabel .
+            }
+            UNION {
+                ?version owl:sameAs ?exactMatch_uri .
+            }
+        }
+    }
+}

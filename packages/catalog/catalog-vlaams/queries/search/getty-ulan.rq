@@ -1,0 +1,56 @@
+PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX gschema: <http://schema.org/>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+PREFIX luc: <http://www.ontotext.com/owlim/lucene#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX void: <http://rdfs.org/ns/void#>
+
+# ULAN: persons and corporate bodies. The gvp class (gvp:PersonConcept, gvp:GroupConcept) is passed
+# through and mapped to the central result type by the catalog's vtn:typeMapping; schema:Person and
+# schema:Organization are added as well so the person details are read.
+CONSTRUCT {
+    ?uri a skos:Concept, ?type, ?schemaType ;
+        skos:prefLabel ?prefLabel ;
+        skos:altLabel ?altLabel ;
+        skos:scopeNote ?biography ;
+        rdfs:seeAlso ?rdfs_seeAlso ;
+        skos:exactMatch ?exactMatch_uri ;
+        schema:birthDate ?start ;
+        schema:deathDate ?end ;
+        schema:nationality ?nationality ;
+        schema:gender ?gender .
+}
+WHERE {
+    {
+        SELECT DISTINCT ?uri ?type WHERE {
+            ?uri luc:term ?query ;
+                a ?type ;
+                void:inDataset <http://vocab.getty.edu/dataset/ulan> .
+            VALUES ?type { gvp:PersonConcept gvp:GroupConcept }
+        }
+        #LIMIT#
+    }
+    BIND(IF(?type = gvp:PersonConcept, schema:Person, schema:Organization) AS ?schemaType)
+
+    # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
+    # see “One UNION branch per multi-valued property” in the catalog README.
+    {
+        { ?uri gvp:prefLabelGVP/skosxl:literalForm ?prefLabel . }
+        UNION { ?uri skosxl:altLabel/skosxl:literalForm ?altLabel . }
+        UNION { ?uri foaf:focus/gvp:biographyPreferred/gschema:description ?biography . }
+        UNION { ?uri rdfs:seeAlso ?rdfs_seeAlso . }
+        UNION {
+            ?uri skos:exactMatch ?exactMatch_uri .
+            FILTER(?exactMatch_uri != ?uri)
+        }
+        UNION { ?uri foaf:focus/gvp:biographyPreferred/gvp:estStart ?start . }
+        UNION { ?uri foaf:focus/gvp:biographyPreferred/gvp:estEnd ?end . }
+        UNION { ?uri foaf:focus/gvp:nationalityPreferred/gvp:prefLabelGVP/skosxl:literalForm ?nationality . }
+        UNION { ?uri foaf:focus/gschema:gender/gvp:prefLabelGVP/skosxl:literalForm ?gender . }
+    }
+}

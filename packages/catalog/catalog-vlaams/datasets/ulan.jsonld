@@ -1,0 +1,77 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "http://vocab.getty.edu/ulan",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "Union List of Artist Names" },
+    { "@language": "nl", "@value": "Union List of Artist Names" }
+  ],
+  "alternateName": [
+    { "@language": "en", "@value": "ULAN" },
+    { "@language": "nl", "@value": "ULAN" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Personen"
+    },
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Actoren-en-organismen"
+    }
+  ],
+  "creator": [{ "@id": "http://www.getty.edu/research/" }],
+  "url": [{ "@id": "http://vocab.getty.edu/ulan/" }],
+  "mainEntityOfPage": [
+    {
+      "@id": "https://www.getty.edu/research/tools/vocabularies/ulan/about.html"
+    }
+  ],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "Artists, architects, firms, studios and other agents in the arts, with biographies, dates and nationalities"
+    },
+    {
+      "@language": "nl",
+      "@value": "Kunstenaars, architecten, firma's, ateliers en andere actoren in de kunsten, met biografieën, data en nationaliteiten"
+    }
+  ],
+  "inLanguage": ["en", "nl"],
+  "license": "http://opendatacommons.org/licenses/by/1.0/",
+  "vtn:resultType": ["person", "organization"],
+  "vtn:typeMapping": [
+    {
+      "vtn:sourceType": {
+        "@id": "http://vocab.getty.edu/ontology#PersonConcept"
+      },
+      "vtn:resultType": "person"
+    },
+    {
+      "vtn:sourceType": {
+        "@id": "http://vocab.getty.edu/ontology#GroupConcept"
+      },
+      "vtn:resultType": "organization"
+    }
+  ],
+  "distribution": [
+    {
+      "@id": "https://vocab.getty.edu/sparql#ulan",
+      "@type": "DataDownload",
+      "contentUrl": "https://vocab.getty.edu/sparql",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 8000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../queries/search/getty-ulan.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../queries/lookup/getty-ulan.rq"
+        }
+      ]
+    }
+  ]
+}

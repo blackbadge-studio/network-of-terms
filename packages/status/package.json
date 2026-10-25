@@ -64,6 +64,11 @@
               "input": "packages/catalog/catalog",
               "glob": "**/*",
               "output": "catalog"
+            },
+            {
+              "input": "packages/catalog/catalog-vlaams",
+              "glob": "**/*",
+              "output": "catalog-vlaams"
             }
           ],
           "esbuildOptions": {

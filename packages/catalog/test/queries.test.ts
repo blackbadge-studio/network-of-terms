@@ -4,21 +4,23 @@ import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { Parser } from 'sparqljs';
 
-const queriesPath = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  '../catalog/queries',
-);
+const queryFiles = ['catalog', 'catalog-vlaams'].flatMap((catalog) => {
+  const queriesPath = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    `../${catalog}/queries`,
+  );
+  return ['lookup', 'search'].flatMap((kind) =>
+    fs
+      .readdirSync(`${queriesPath}/${kind}`)
+      .filter((name) => name.endsWith('.rq'))
+      .map((name) => [
+        `${catalog}/${kind}/${name}`,
+        `${queriesPath}/${kind}/${name}`,
+      ]),
+  );
+});
 
-const queryFiles = ['lookup', 'search'].flatMap((kind) =>
-  fs
-    .readdirSync(`${queriesPath}/${kind}`)
-    .filter((name) => name.endsWith('.rq'))
-    .map((name) => `${kind}/${name}`),
-);
-
-describe.each(queryFiles)('%s', (file) => {
-  const path = `${queriesPath}/${file}`;
-
+describe.each(queryFiles)('%s', (file, path) => {
   /**
    * A byte order mark is invisible in an editor and in a diff, but it is part of the query text we
    * send: PoolParty answers a query that starts with one with an HTTP 400, which fails the whole

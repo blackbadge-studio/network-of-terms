@@ -3,9 +3,22 @@
   "@id": "https://example.org/fast",
   "@type": "Dataset",
   "name": [{ "@language": "nl", "@value": "Snelle bron" }],
-  "description": [{ "@language": "nl", "@value": "Een bron zonder eigen timeout" }],
-  "genre": [{ "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten" }],
-  "creator": [{ "@id": "https://example.org/", "@type": "Organization", "name": "Example", "alternateName": "EX" }],
+  "description": [
+    { "@language": "nl", "@value": "Een bron zonder eigen timeout" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+    }
+  ],
+  "creator": [
+    {
+      "@id": "https://example.org/",
+      "@type": "Organization",
+      "name": "Example",
+      "alternateName": "EX"
+    }
+  ],
   "url": ["https://example.org/fast/"],
   "mainEntityOfPage": ["https://example.org/fast/about"],
   "inLanguage": "nl",
@@ -16,8 +29,14 @@
       "contentUrl": "https://example.org/fast/sparql",
       "encodingFormat": "application/sparql-query",
       "potentialAction": [
-        { "@type": ["Action", "SearchAction"], "query": "file://../queries/search.rq" },
-        { "@type": ["Action", "FindAction"], "query": "file://../queries/lookup.rq" }
+        {
+          "@type": ["Action", "SearchAction"],
+          "query": "file://../queries/search.rq"
+        },
+        {
+          "@type": ["Action", "FindAction"],
+          "query": "file://../queries/lookup.rq"
+        }
       ]
     }
   ]

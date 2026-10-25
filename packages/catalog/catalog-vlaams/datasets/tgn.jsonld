@@ -1,0 +1,60 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "http://vocab.getty.edu/tgn",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "Thesaurus of Geographic Names" },
+    { "@language": "nl", "@value": "Thesaurus of Geographic Names" }
+  ],
+  "alternateName": [
+    { "@language": "en", "@value": "TGN" },
+    { "@language": "nl", "@value": "TGN" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Locaties"
+    }
+  ],
+  "creator": [{ "@id": "http://www.getty.edu/research/" }],
+  "url": [{ "@id": "http://vocab.getty.edu/tgn/" }],
+  "mainEntityOfPage": [
+    {
+      "@id": "https://www.getty.edu/research/tools/vocabularies/tgn/about.html"
+    }
+  ],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "Current and historical place names worldwide, with coordinates, place types and the administrative hierarchy"
+    },
+    {
+      "@language": "nl",
+      "@value": "Huidige en historische plaatsnamen wereldwijd, met coördinaten, plaatstypes en de administratieve hiërarchie"
+    }
+  ],
+  "inLanguage": ["en", "nl"],
+  "license": "http://opendatacommons.org/licenses/by/1.0/",
+  "vtn:resultType": ["place"],
+  "distribution": [
+    {
+      "@id": "https://vocab.getty.edu/sparql#tgn",
+      "@type": "DataDownload",
+      "contentUrl": "https://vocab.getty.edu/sparql",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 8000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../queries/search/getty-tgn.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../queries/lookup/getty-tgn.rq"
+        }
+      ]
+    }
+  ]
+}

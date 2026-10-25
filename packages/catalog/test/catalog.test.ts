@@ -225,6 +225,28 @@ describe('Catalog', () => {
     expect(plain.typeMappings).toEqual([]);
   });
 
+  it('loads the Flemish catalog (catalog-vlaams) with its shared and own templates', async () => {
+    const vlaams = await getCatalog(
+      resolve(dirname(fileURLToPath(import.meta.url)), '../catalog-vlaams/'),
+    );
+    expect(vlaams.datasets.length).toBeGreaterThanOrEqual(6);
+    for (const dataset of vlaams.datasets) {
+      const distribution = dataset.getSparqlDistribution()!;
+      expect(distribution.searchQuery, dataset.iri).toContain('CONSTRUCT');
+      expect(distribution.lookupQuery, dataset.iri).toContain('?uris');
+      expect(dataset.creators[0].name.nl, dataset.iri).toBeTruthy();
+    }
+    // Shared Dutch templates are inlined through the relative file:// path.
+    const aat = vlaams.getDatasetByIri('http://vocab.getty.edu/aat')!;
+    expect(aat.getSparqlDistribution()!.searchQuery).toContain('luc:term');
+    expect(aat.getSparqlDistribution()!.timeoutMs).toBe(8000);
+    expect(aat.resultTypes).toEqual(['concept']);
+    // Flemish Wikidata subsets route lookups to the unrestricted dataset that owns the prefix.
+    expect(
+      vlaams.getDatasetByTermIri('http://www.wikidata.org/entity/Q5599')?.iri,
+    ).toEqual('https://www.wikidata.org#alle-entiteiten');
+  }, 30_000);
+
   it('returns all languages', async () => {
     expect(catalog.getLanguages().sort()).toEqual(['en', 'fy', 'nl']);
   });

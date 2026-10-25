@@ -1,0 +1,51 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "https://www.wikidata.org#vlaanderen-personen",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "Wikidata: persons (Belgium)" },
+    { "@language": "nl", "@value": "Wikidata: personen (België)" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Personen"
+    }
+  ],
+  "creator": [{ "@id": "https://www.wikidata.org/entity/Q180" }],
+  "mainEntityOfPage": [{ "@id": "https://www.wikidata.org" }],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "Persons with a Belgian nationality or birthplace, or an ODIS, FOMU or KIK-IRPA identifier; linked to VIAF where available"
+    },
+    {
+      "@language": "nl",
+      "@value": "Personen met een Belgische nationaliteit of geboorteplaats, of met een identifier van ODIS, FOMU of KIK-IRPA; met VIAF-koppeling waar beschikbaar"
+    }
+  ],
+  "inLanguage": ["nl", "en"],
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "vtn:resultType": ["person"],
+  "distribution": [
+    {
+      "@id": "https://query.wikidata.org/sparql#vlaanderen-personen",
+      "@type": "DataDownload",
+      "contentUrl": "https://query.wikidata.org/sparql",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 10000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../queries/search/wikidata-vlaanderen-personen.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../queries/lookup/wikidata-vlaanderen.rq"
+        }
+      ]
+    }
+  ]
+}

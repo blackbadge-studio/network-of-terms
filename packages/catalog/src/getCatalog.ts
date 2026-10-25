@@ -29,10 +29,8 @@ import { RdfStore } from 'rdf-stores';
  * @throws Error if the path is not an existing directory or the directory holds no datasets.
  */
 export async function getCatalog(path?: string): Promise<Catalog> {
-  const directory = (
-    path ||
-    process.env.CATALOG_PATH ||
-    bundledCatalogPath()
+  const directory = resolveCatalogPath(
+    path || process.env.CATALOG_PATH,
   ).replace(/\\/g, '/'); // Windows compatibility.
   const stats = fs.statSync(directory, { throwIfNoEntry: false });
   if (stats === undefined) {
@@ -292,6 +290,31 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
         ),
     ),
   );
+}
+
+/**
+ * A catalog path that is not an existing directory as given (absolute, or relative to the working
+ * directory) is tried next to the bundle and next to this package, where the servers copy every
+ * catalog directory at build time. So `CATALOG_PATH=catalog-vlaams` selects the Flemish catalog
+ * wherever the server runs, without knowing the deployment's file layout.
+ */
+function resolveCatalogPath(path: string | undefined): string {
+  if (!path) {
+    return bundledCatalogPath();
+  }
+  if (fs.existsSync(path)) {
+    return path;
+  }
+  for (const base of [
+    new URL('.', import.meta.url),
+    new URL('../', import.meta.url),
+  ]) {
+    const candidate = fileURLToPath(new URL(path, base));
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return path; // Let getCatalog() report it as missing.
 }
 
 /**

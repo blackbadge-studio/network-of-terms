@@ -1,0 +1,51 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "https://www.wikidata.org#vlaanderen-plaatsen",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "Wikidata: places in Belgium" },
+    { "@language": "nl", "@value": "Wikidata: plaatsen in België" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Locaties"
+    }
+  ],
+  "creator": [{ "@id": "https://www.wikidata.org/entity/Q180" }],
+  "mainEntityOfPage": [{ "@id": "https://www.wikidata.org" }],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "Cities, municipalities, boroughs and other settlements in Belgium"
+    },
+    {
+      "@language": "nl",
+      "@value": "Steden, gemeenten, deelgemeenten en andere nederzettingen in België"
+    }
+  ],
+  "inLanguage": ["nl", "en"],
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "vtn:resultType": ["place"],
+  "distribution": [
+    {
+      "@id": "https://query.wikidata.org/sparql#vlaanderen-plaatsen",
+      "@type": "DataDownload",
+      "contentUrl": "https://query.wikidata.org/sparql",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 10000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../queries/search/wikidata-vlaanderen-plaatsen.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../queries/lookup/wikidata-vlaanderen.rq"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "https://data.rkd.nl/rkdartists",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "RKDartists" },
+    { "@language": "nl", "@value": "RKDartists" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Personen"
+    }
+  ],
+  "creator": [{ "@id": "https://rkd.nl" }],
+  "url": [{ "@id": "https://data.rkd.nl/artists/" }],
+  "mainEntityOfPage": [{ "@id": "https://rkd.nl/nl/explore/artists" }],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "Biographical data of artists from the Low Countries and abroad, from the Middle Ages to the present, including the Flemish masters"
+    },
+    {
+      "@language": "nl",
+      "@value": "Biografische gegevens van kunstenaars uit de Lage Landen en daarbuiten, van de middeleeuwen tot heden, met onder meer de Vlaamse meesters"
+    }
+  ],
+  "inLanguage": ["en", "nl"],
+  "vtn:resultType": ["person"],
+  "distribution": [
+    {
+      "@id": "https://api.rkd.triply.cc/datasets/rkd/RKD-SDO-Knowledge-Graph/sparql",
+      "@type": "DataDownload",
+      "contentUrl": "https://api.rkd.triply.cc/datasets/rkd/RKD-SDO-Knowledge-Graph/services/Virtuoso/sparql",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 10000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../../catalog/queries/search/rkdartists.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../../catalog/queries/lookup/rkdartists.rq"
+        }
+      ]
+    }
+  ]
+}

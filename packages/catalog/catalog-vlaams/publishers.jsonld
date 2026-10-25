@@ -1,0 +1,80 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "http://www.getty.edu/research/",
+      "@type": "Organization",
+      "name": [
+        { "@language": "en", "@value": "Getty Research Institute" },
+        { "@language": "nl", "@value": "Getty Research Institute" }
+      ],
+      "alternateName": "Getty"
+    },
+    {
+      "@id": "https://www.wikidata.org/entity/Q180",
+      "@type": "Organization",
+      "name": [
+        { "@language": "en", "@value": "Wikidata" },
+        { "@language": "nl", "@value": "Wikidata" }
+      ],
+      "alternateName": "Wikidata"
+    },
+    {
+      "@id": "https://rkd.nl",
+      "@type": "Organization",
+      "name": [
+        {
+          "@language": "en",
+          "@value": "RKD – Netherlands Institute for Art History"
+        },
+        {
+          "@language": "nl",
+          "@value": "RKD – Nederlands Instituut voor Kunstgeschiedenis"
+        }
+      ],
+      "alternateName": "RKD"
+    },
+    {
+      "@id": "https://www.momu.be",
+      "@type": "Organization",
+      "name": [
+        { "@language": "en", "@value": "MoMu – Fashion Museum Antwerp" },
+        { "@language": "nl", "@value": "MoMu – Modemuseum Antwerpen" }
+      ],
+      "alternateName": "MoMu"
+    },
+    {
+      "@id": "https://stad.gent",
+      "@type": "Organization",
+      "name": [
+        { "@language": "en", "@value": "City of Ghent" },
+        { "@language": "nl", "@value": "Stad Gent" }
+      ],
+      "alternateName": "Stad Gent"
+    },
+    {
+      "@id": "https://www.onroerenderfgoed.be",
+      "@type": "Organization",
+      "name": [
+        { "@language": "en", "@value": "Flanders Heritage Agency" },
+        { "@language": "nl", "@value": "agentschap Onroerend Erfgoed" }
+      ],
+      "alternateName": "Onroerend Erfgoed"
+    },
+    {
+      "@id": "https://meemoo.be",
+      "@type": "Organization",
+      "name": [
+        {
+          "@language": "en",
+          "@value": "meemoo, Flemish Institute for Archives"
+        },
+        {
+          "@language": "nl",
+          "@value": "meemoo, Vlaams instituut voor het archief"
+        }
+      ],
+      "alternateName": "meemoo"
+    }
+  ]
+}

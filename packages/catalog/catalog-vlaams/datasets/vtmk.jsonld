@@ -1,0 +1,61 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "https://vtmk.data.momu.be/id/100001",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "Visual Thesaurus for Fashion & Costumes" },
+    { "@language": "nl", "@value": "Visuele Thesaurus voor Mode & Kostuums" }
+  ],
+  "alternateName": [
+    { "@language": "en", "@value": "VTMK" },
+    { "@language": "nl", "@value": "VTMK" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+    },
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Materialen"
+    },
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Technieken"
+    }
+  ],
+  "creator": [{ "@id": "https://www.momu.be" }],
+  "url": [{ "@id": "https://vtmk.data.momu.be/id/" }],
+  "mainEntityOfPage": [{ "@id": "https://vtmk.data.momu.be/id.html" }],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "Bilingual thesaurus of 1,292 fashion and costume terms (garments, accessories, materials, techniques), with images and links to the AAT; built by MoMu and meemoo"
+    },
+    {
+      "@language": "nl",
+      "@value": "Tweetalige thesaurus met 1 292 termen over mode en kostuums (kledingstukken, accessoires, materialen, technieken), met afbeeldingen en koppelingen naar de AAT; opgebouwd door MoMu en meemoo"
+    }
+  ],
+  "inLanguage": ["nl", "en"],
+  "vtn:resultType": ["concept"],
+  "distribution": [
+    {
+      "@id": "https://vtmk.data.momu.be/PoolParty/sparql/id",
+      "@type": "DataDownload",
+      "contentUrl": "https://vtmk.data.momu.be/PoolParty/sparql/id",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 8000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../../catalog/queries/search/poolparty.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../../catalog/queries/lookup/poolparty.rq"
+        }
+      ]
+    }
+  ]
+}

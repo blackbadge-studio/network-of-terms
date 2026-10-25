@@ -1,0 +1,52 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "https://www.wikidata.org#alle-entiteiten",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "Wikidata: all entities" },
+    { "@language": "nl", "@value": "Wikidata: alle entiteiten" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+    }
+  ],
+  "creator": [{ "@id": "https://www.wikidata.org/entity/Q180" }],
+  "url": [{ "@id": "http://www.wikidata.org/entity/" }],
+  "mainEntityOfPage": [{ "@id": "https://www.wikidata.org" }],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "All entities in Wikidata, for terms no other source covers"
+    },
+    {
+      "@language": "nl",
+      "@value": "Alle entiteiten in Wikidata, voor termen die geen andere bron dekt"
+    }
+  ],
+  "inLanguage": ["nl", "en"],
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "vtn:resultType": ["concept", "person", "organization", "place", "event"],
+  "distribution": [
+    {
+      "@id": "https://query.wikidata.org/sparql#alle-entiteiten",
+      "@type": "DataDownload",
+      "contentUrl": "https://query.wikidata.org/sparql",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 10000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../queries/search/wikidata-alle-entiteiten.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../queries/lookup/wikidata-vlaanderen.rq"
+        }
+      ]
+    }
+  ]
+}

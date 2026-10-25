@@ -1,0 +1,61 @@
+{
+  "@context": [
+    "https://schema.org",
+    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+  ],
+  "@id": "https://stad.gent/id/conceptscheme/concept",
+  "@type": "Dataset",
+  "name": [
+    { "@language": "en", "@value": "Ghent heritage thesaurus (CoGhent)" },
+    { "@language": "nl", "@value": "Gentse erfgoedthesaurus (CoGhent)" }
+  ],
+  "alternateName": [
+    { "@language": "en", "@value": "Stad Gent" },
+    { "@language": "nl", "@value": "Stad Gent" }
+  ],
+  "genre": [
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+    },
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Locaties"
+    },
+    {
+      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Gebouwen"
+    }
+  ],
+  "creator": [{ "@id": "https://stad.gent" }],
+  "url": [{ "@id": "https://stad.gent/id/concept/" }],
+  "mainEntityOfPage": [{ "@id": "https://github.com/CoGhent/sparql_party" }],
+  "description": [
+    {
+      "@language": "en",
+      "@value": "Shared thesaurus of some 27,000 concepts used by the Ghent museums and archive (Design Museum Gent, Huis van Alijn, STAM, Industriemuseum, Archief Gent), published as linked data by the City of Ghent"
+    },
+    {
+      "@language": "nl",
+      "@value": "Gedeelde thesaurus van zo'n 27 000 concepten van de Gentse musea en het archief (Design Museum Gent, Huis van Alijn, STAM, Industriemuseum, Archief Gent), als linked data gepubliceerd door Stad Gent"
+    }
+  ],
+  "inLanguage": ["nl"],
+  "vtn:resultType": ["concept"],
+  "distribution": [
+    {
+      "@id": "https://stad.gent/sparql#thesaurus",
+      "@type": "DataDownload",
+      "contentUrl": "https://stad.gent/sparql",
+      "encodingFormat": "application/sparql-query",
+      "vtn:timeoutMs": 10000,
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "query": "file://../queries/search/stad-gent-thesaurus.rq"
+        },
+        {
+          "@type": "FindAction",
+          "query": "file://../queries/lookup/stad-gent-thesaurus.rq"
+        }
+      ]
+    }
+  ]
+}

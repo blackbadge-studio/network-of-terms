@@ -15,42 +15,54 @@ import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import type { DatasetCore } from '@rdfjs/types';
 
-describe('Dataset', () => {
-  it('validates against SHACL', async () => {
-    const datasets = listDatasets();
+const catalogPaths = {
+  catalog: resolve(dirname(fileURLToPath(import.meta.url)), '../catalog'),
+  'catalog-vlaams': resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    '../catalog-vlaams',
+  ),
+};
 
-    const validator = await shaclValidator();
-    const jsonLdParser = new JsonLdParser();
-    const base = await rdf
-      .dataset()
-      .import(
-        fs
-          .createReadStream(catalogPath + '/publishers.jsonld')
-          .pipe(jsonLdParser),
-      );
+describe.each(Object.entries(catalogPaths))(
+  'Dataset in %s',
+  (_, catalogPath) => {
+    it('validates against SHACL', async () => {
+      const datasets = listDatasets(catalogPath);
 
-    for (const dataset of datasets) {
+      const validator = await shaclValidator();
       const jsonLdParser = new JsonLdParser();
-      const data = (
-        await rdf
-          .dataset()
-          .import(
-            fs
-              .createReadStream(catalogPath + '/datasets/' + dataset)
-              .pipe(jsonLdParser),
-          )
-      ).addAll(base);
-      expect(containsDatasetNode(data)).toBe(true);
+      const base = await rdf
+        .dataset()
+        .import(
+          fs
+            .createReadStream(catalogPath + '/publishers.jsonld')
+            .pipe(jsonLdParser),
+        );
 
-      const report = await validator.validate(data);
-      expect(report).toConform();
-    }
-    // Validates every catalog entry in turn, which takes most of the default 10 s locally and
-    // more than that on a slow CI runner.
-  }, 60_000);
-});
+      for (const dataset of datasets) {
+        const jsonLdParser = new JsonLdParser();
+        const data = (
+          await rdf
+            .dataset()
+            .import(
+              fs
+                .createReadStream(catalogPath + '/datasets/' + dataset)
+                .pipe(jsonLdParser),
+            )
+        ).addAll(base);
+        expect(containsDatasetNode(data)).toBe(true);
 
-const listDatasets = () => fs.readdirSync(catalogPath + '/datasets');
+        const report = await validator.validate(data);
+        expect(report).toConform();
+      }
+      // Validates every catalog entry in turn, which takes most of the default 10 s locally and
+      // more than that on a slow CI runner.
+    }, 60_000);
+  },
+);
+
+const listDatasets = (catalogPath: string) =>
+  fs.readdirSync(catalogPath + '/datasets');
 
 const containsDatasetNode = (data: DatasetCore): boolean =>
   data.match(
@@ -85,10 +97,6 @@ expect.extend({
   },
 });
 
-const catalogPath = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  '../catalog',
-);
 const shaclPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   '../shacl/dataset.jsonld',

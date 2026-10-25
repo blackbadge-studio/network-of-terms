@@ -1,0 +1,73 @@
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX hint: <http://www.bigdata.com/queryHints#>
+PREFIX mwapi: <https://www.mediawiki.org/ontology#API/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX vrank: <http://purl.org/voc/vrank#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+
+# Wikidata without restriction, for terms that no other source covers.
+CONSTRUCT {
+    ?item a skos:Concept ;
+        skos:prefLabel ?prefLabel ;
+        skos:altLabel ?altLabel ;
+        skos:scopeNote ?description ;
+        skos:exactMatch ?viaf ;
+        rdfs:seeAlso ?odis ;
+        vrank:simpleRank ?score .
+}
+WHERE {
+    {
+        SELECT DISTINCT ?item ?score WHERE {
+            # Blazegraph otherwise reorders the type restriction before the search service and
+            # scans millions of items; with the optimizer off the patterns run as written.
+            hint:Query hint:optimizer "None" .
+            SERVICE wikibase:mwapi {
+                bd:serviceParam wikibase:endpoint "www.wikidata.org" ;
+                    wikibase:api "Search" ;
+                    wikibase:limit "once" ;
+                    mwapi:language "nl" ;
+                    mwapi:srsearch ?query .
+                ?item wikibase:apiOutputItem mwapi:title .
+                ?ordinal wikibase:apiOrdinal true.
+            }
+            BIND(-?ordinal AS ?score)
+
+            # ‘mul’ is Wikidata’s ‘default for all languages’ label.
+            ?item rdfs:label ?prefLabel .
+            FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
+        }
+        ORDER BY ASC(?ordinal)
+        #LIMIT#
+    }
+
+    # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
+    # see “One UNION branch per multi-valued property” in the catalog README.
+    {
+        {
+            ?item rdfs:label ?prefLabel .
+            FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
+        }
+        UNION {
+            ?item skos:altLabel ?altLabel .
+            FILTER(LANG(?altLabel) IN ("nl", "en", "mul"))
+        }
+        UNION {
+            ?item schema:description ?description .
+            FILTER(LANG(?description) IN ("nl", "en"))
+        }
+        UNION {
+            # VIAF is in the tender but has no SPARQL endpoint; its identifier travels along as an
+            # exact match so clients get the VIAF URI with every person.
+            ?item wdt:P214 ?viafId .
+            BIND(IRI(CONCAT("https://viaf.org/viaf/", ?viafId)) AS ?viaf)
+        }
+        UNION {
+            ?item wdt:P2372 ?odisId .
+            BIND(IRI(CONCAT("https://www.odis.be/lnk/", ?odisId)) AS ?odis)
+        }
+    }
+}
