@@ -141,7 +141,7 @@ de responstijd blijft onder een grens) en geen exacte resultaatlijsten.
 | M-04 | Kopieer een URI uit de resultatenlijst en uit de detailweergave                      | URI staat ongewijzigd op het klembord, bevestiging zichtbaar                                                                                                         |
 | M-05 | Open een term en navigeer via een bredere term                                       | detail toont labels, beschrijving, relaties; klik op een bredere term opent die term                                                                                 |
 | M-06 | "Bekijk bij bron"                                                                    | opent de pagina bij de bronhouder in een nieuw tabblad                                                                                                               |
-| M-07 | Zoeken met URI (`http://www.wikidata.org/entity/Q12990`)                             | toont Ieper met bron en type                                                                                                                                         |
+| M-07 | Zoeken met URI (`http://www.wikidata.org/entity/Q102728`)                            | toont Ieper met bron en type                                                                                                                                         |
 | M-08 | Onbekende URI                                                                        | duidelijke melding "niet gevonden" of "geen bron"                                                                                                                    |
 | M-09 | Bronnenpagina                                                                        | alle negen bronnen met status (groen/rood/grijs), talen, onderwerpen, URI                                                                                            |
 | M-10 | Taal wisselen NL/EN                                                                  | interface en waar mogelijk labels wisselen van taal; geen label leeg zonder uitleg                                                                                   |
@@ -180,5 +180,6 @@ Tegen de testomgeving: 38 van 45 scenario's geslaagd bij de eerste run. De
 zeven fouten bleken vijf keer een fout in het scenario zelf (tegenstrijdige
 GraphQL-fragmenten) en twee keer een echte bevinding: lookups van
 Wikidata-plaatsen liepen tegen de timeout aan omdat het sjabloon de volledige
-klassenboom doorliep. Beide zijn gecorrigeerd; zie het rapport in de
-simulator voor de actuele stand.
+klassenboom doorliep. Beide zijn gecorrigeerd. Tweede run na de
+correctie: 44 van 45 geslaagd; de enige fout was opnieuw een scenario
+(verkeerde Wikidata-identifier voor Ieper), daarna 45 van 45.

@@ -691,11 +691,11 @@
       "title": "Aanbevolen opslaggegevens in één vraag (URI, label, bron, type)",
       "requirement": ["F4.6", "F8.2", "F11.3"],
       "kind": "graphql",
-      "query": "{ lookup(uris: [\"http://www.wikidata.org/entity/Q12990\"]) { uri source { ... on Source { uri name } } result { ... on Term { uri prefLabel resultType } } } }",
+      "query": "{ lookup(uris: [\"http://www.wikidata.org/entity/Q102728\"]) { uri source { ... on Source { uri name } } result { ... on Term { uri prefLabel resultType } } } }",
       "checks": [
         {
           "path": "data.lookup[0].result.uri",
-          "equals": "http://www.wikidata.org/entity/Q12990"
+          "equals": "http://www.wikidata.org/entity/Q102728"
         },
         {
           "path": "data.lookup[0].source.uri",
