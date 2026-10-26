@@ -829,6 +829,27 @@ describe('Server', () => {
     await cached.close();
   });
 
+  it('serves the acceptance scenarios and their runner under /tests', async () => {
+    const scenarios = await httpServer.inject({
+      method: 'GET',
+      url: '/tests/scenarios.json',
+    });
+    expect(scenarios.statusCode).toEqual(200);
+    expect(scenarios.json().scenarios.length).toBeGreaterThan(30);
+    const runner = await httpServer.inject({
+      method: 'GET',
+      url: '/tests/runner.mjs',
+    });
+    expect(runner.statusCode).toEqual(200);
+    expect(runner.headers['content-type']).toContain('javascript');
+    expect(runner.body).toContain('export async function runScenarios');
+    const other = await httpServer.inject({
+      method: 'GET',
+      url: '/tests/package.json',
+    });
+    expect(other.statusCode).toEqual(404);
+  });
+
   it('reports health with the loaded catalog and status service state', async () => {
     const response = await httpServer.inject({ method: 'GET', url: '/health' });
     expect(response.statusCode).toEqual(200);

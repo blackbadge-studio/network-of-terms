@@ -169,6 +169,31 @@ export async function server(
     }
   }
 
+  // Acceptance scenarios and their runner, so the simulator in the search interface runs exactly
+  // the suite the CLI runs (see docs/vlaams-termennetwerk/testplan.md).
+  const scenariosDir = [
+    join(dirname(fileURLToPath(import.meta.url)), 'scenarios'),
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'scenarios'),
+  ].find((dir) => existsSync(join(dir, 'scenarios.json')));
+  const testFiles: Record<string, string> = {
+    'scenarios.json': 'application/json; charset=utf-8',
+    'runner.mjs': 'text/javascript; charset=utf-8',
+  };
+  server.route({
+    method: 'GET',
+    url: '/tests/:file',
+    handler: (req, reply) => {
+      const file = (req.params as { file: string }).file;
+      if (!scenariosDir || !(file in testFiles)) {
+        return reply.status(404).send({ error: 'Not found' });
+      }
+      return reply
+        .header('Content-Type', testFiles[file])
+        .header('Cache-Control', 'public, max-age=300')
+        .send(readFileSync(join(scenariosDir, file), 'utf-8'));
+    },
+  });
+
   // Redirect /playground to /graphiql for BC.
   server.route({
     method: 'GET',
