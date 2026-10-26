@@ -22,7 +22,7 @@ enkele afhankelijkheid van de Nederlandse productieomgeving.
    (SHACL-validatie van beide catalogi, parsing van alle SPARQL-sjablonen),
    GraphQL-server, statusdienst. Draaien bij elke commit en in CI:
    `npx nx run-many -t test`.
-2. **Acceptatiescenario's** (dit plan, §4): 45 scenario's die de live API en
+2. **Acceptatiescenario's** (dit plan, §4): 49 scenario's die de live API en
    zoekinterface aanspreken en het resultaat controleren. Eén bestand,
    `packages/graphql/scenarios/scenarios.json`, twee manieren om ze te draaien:
    - in de terminal of CI:
@@ -83,6 +83,10 @@ de responstijd blijft onder een grens) en geen exacte resultaatlijsten.
 | API-16 | Termdetail                    | Meertalige labels met taaltag                                         | F2.19, §3.1 meertaligheid |
 | API-17 | Hiërarchie                    | Bredere en nauwere termen in VTMK                                     | F2.11, F2.23              |
 | API-18 | Hiërarchie                    | Bredere term in de Gentse thesaurus                                   | F2.11                     |
+| API-40 | Hiërarchie                    | Bladeren: topconcepten van VTMK                                       | F5.1                      |
+| API-41 | Hiërarchie                    | Bladeren: nauwere termen van "kleding" met hun bredere term           | F5.1, F2.23               |
+| API-42 | Hiërarchie                    | Alleen conceptbronnen bieden bladeren aan                             | F5.1, F3.9                |
+| API-43 | Hiërarchie                    | Bladeren in een personenbron geeft een duidelijke fout                | F5.1                      |
 | API-19 | Bronstatus                    | Elke bron heeft een actuele status uit de eigen monitor               | F10.3, F10.11, F3.2       |
 | API-20 | Bronstatus                    | Statusdienst publiceert observaties als LDES                          | F10.9                     |
 | API-21 | Bronstatus                    | Healthcheck van de API                                                | F10.7                     |

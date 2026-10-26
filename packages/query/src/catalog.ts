@@ -163,6 +163,13 @@ export class SparqlDistribution {
     readonly lookupQuery: string,
     readonly features: Feature[] = [],
     readonly timeoutMs?: number,
+    /**
+     * Optional third template (`vtn:BrowseAction`) for hierarchical navigation: given `?parent`
+     * (a concept, or the concept scheme for the top level) it constructs the direct narrower
+     * concepts, each with its labels, all its broader concepts and at least one narrower concept
+     * when it has any.
+     */
+    readonly browseQuery?: string,
   ) {}
 
   /** The timeout to use for this source given what the caller allows. */
@@ -187,6 +194,7 @@ export class Feature {
 export enum FeatureType {
   RECONCILIATION = 'https://reconciliation-api.github.io/specs/latest/',
   GENRE_FILTER = 'genre-filter',
+  HIERARCHY = 'hierarchy',
 }
 
 /**

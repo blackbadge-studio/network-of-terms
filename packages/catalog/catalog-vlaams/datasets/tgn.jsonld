@@ -1,25 +1,47 @@
 {
   "@context": [
     "https://schema.org",
-    { "vtn": "https://termennetwerk.meemoo.be/ns#" }
+    {
+      "vtn": "https://termennetwerk.meemoo.be/ns#"
+    }
   ],
   "@id": "http://vocab.getty.edu/tgn",
   "@type": "Dataset",
   "name": [
-    { "@language": "en", "@value": "Thesaurus of Geographic Names" },
-    { "@language": "nl", "@value": "Thesaurus of Geographic Names" }
+    {
+      "@language": "en",
+      "@value": "Thesaurus of Geographic Names"
+    },
+    {
+      "@language": "nl",
+      "@value": "Thesaurus of Geographic Names"
+    }
   ],
   "alternateName": [
-    { "@language": "en", "@value": "TGN" },
-    { "@language": "nl", "@value": "TGN" }
+    {
+      "@language": "en",
+      "@value": "TGN"
+    },
+    {
+      "@language": "nl",
+      "@value": "TGN"
+    }
   ],
   "genre": [
     {
       "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Locaties"
     }
   ],
-  "creator": [{ "@id": "http://www.getty.edu/research/" }],
-  "url": [{ "@id": "http://vocab.getty.edu/tgn/" }],
+  "creator": [
+    {
+      "@id": "http://www.getty.edu/research/"
+    }
+  ],
+  "url": [
+    {
+      "@id": "http://vocab.getty.edu/tgn/"
+    }
+  ],
   "mainEntityOfPage": [
     {
       "@id": "https://www.getty.edu/research/tools/vocabularies/tgn/about.html"
@@ -53,6 +75,10 @@
         {
           "@type": "FindAction",
           "query": "file://../queries/lookup/getty-tgn.rq"
+        },
+        {
+          "@type": "vtn:BrowseAction",
+          "query": "file://../queries/browse/getty.rq"
         }
       ]
     }

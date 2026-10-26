@@ -670,11 +670,87 @@ function source(
   };
 }
 
+async function browseHierarchy(
+  _: unknown,
+  args: {
+    source: string;
+    uri?: string;
+    languages?: string[];
+    limit: number;
+    timeoutMs: number;
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  context: any,
+) {
+  const catalog: Catalog = context.catalog;
+  const dataset = catalog.getDatasetByIri(args.source);
+  const distribution = dataset?.getSparqlDistribution();
+  if (!dataset || !distribution) {
+    throw new globalThis.Error(`Source with URI "${args.source}" not found`);
+  }
+  if (!distribution.hasFeature(FeatureType.HIERARCHY)) {
+    throw new globalThis.Error(
+      `Source "${args.source}" does not support hierarchical navigation`,
+    );
+  }
+  const languages = [...(args.languages ?? []), context.catalogLanguage];
+  // The top level is the narrower concepts of the concept scheme, which is the dataset itself.
+  const parent = args.uri ?? dataset.iri;
+  const response = await new QueryTermsService({
+    logger: context.app.log,
+  }).browse(parent, distribution, args.limit, args.timeoutMs);
+  return {
+    source: source(distribution, dataset, languages[0], context.statusClient),
+    uri: args.uri ?? null,
+    result:
+      response.result instanceof Error
+        ? response.result
+        : new BrowseNodes(
+            response.result.terms
+              // The parent itself can come back when a source states both directions.
+              .filter((term) => term.id.value !== parent)
+              .map((term) => ({
+                uri: term.id.value,
+                prefLabel: literalValues(term.prefLabels, languages),
+                hasNarrower: term.narrowerTerms.length > 0,
+                broader: term.broaderTerms.map((related) => ({
+                  uri: related.id.value,
+                  prefLabel: literalValues(related.prefLabels, languages),
+                })),
+              }))
+              .sort((a, b) =>
+                (a.prefLabel[0] ?? a.uri).localeCompare(
+                  b.prefLabel[0] ?? b.uri,
+                  languages[0],
+                ),
+              ),
+          ),
+    responseTimeMs: response.responseTimeMs,
+    cached: false,
+  };
+}
+
+class BrowseNodes {
+  constructor(readonly nodes: object[]) {}
+}
+
 export const resolvers = {
   Query: {
     sources: listSources,
     terms: queryTerms,
     lookup: lookupTerms,
+    browse: browseHierarchy,
+  },
+  BrowseResult: {
+    resolveType(result: unknown) {
+      if (result instanceof TimeoutError) {
+        return 'TimeoutError';
+      }
+      if (result instanceof ServerError) {
+        return 'ServerError';
+      }
+      return 'BrowseNodes';
+    },
   },
   TermsResult: {
     resolveType(result: TermsResult) {

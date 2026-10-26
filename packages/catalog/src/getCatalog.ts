@@ -272,6 +272,12 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
               if (searchQuery.includes('?genres')) {
                 features.push(new Feature(FeatureType.GENRE_FILTER));
               }
+              const browseQuery = dataset.distribution!.potentialAction.find(
+                (action) => action.types.includes(vtn.BrowseAction),
+              )?.query;
+              if (browseQuery) {
+                features.push(new Feature(FeatureType.HIERARCHY));
+              }
               return new SparqlDistribution(
                 dataset.distribution!.$id,
                 dataset.distribution!.contentUrl,
@@ -281,6 +287,7 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
                 )[0].query!,
                 features,
                 dataset.distribution!.timeoutMs ?? undefined,
+                browseQuery ?? undefined,
               );
             })(),
           ],

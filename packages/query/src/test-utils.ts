@@ -157,7 +157,26 @@ export const testCatalog = (port: number) =>
               FeatureType.RECONCILIATION,
               new URL('https://example.com/reconcile/rkd'),
             ),
+            new Feature(FeatureType.HIERARCHY),
           ],
+          undefined,
+          `
+          PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+          CONSTRUCT {
+            ?uri a skos:Concept ; skos:prefLabel ?prefLabel ; skos:broader ?broader_uri ; skos:narrower ?child .
+            ?broader_uri skos:prefLabel ?broader_prefLabel .
+          }
+          WHERE {
+            { SELECT DISTINCT ?uri WHERE {
+              { ?uri skos:broader ?parent } UNION { ?parent skos:narrower ?uri }
+            } #LIMIT# }
+            {
+              { ?uri skos:prefLabel ?prefLabel }
+              UNION { ?uri skos:broader ?broader_uri . OPTIONAL { ?broader_uri skos:prefLabel ?broader_prefLabel } }
+              UNION { ?uri skos:narrower ?child }
+              UNION { ?child skos:broader ?uri }
+            }
+          }`,
         ),
       ],
       { nl: 'RKD' },

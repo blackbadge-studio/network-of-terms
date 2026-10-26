@@ -48,6 +48,9 @@ export const schema = (languages: string[]) => `
 
     "Genre-based filtering of search results."
     GENRE_FILTER
+
+    "Hierarchical navigation with the browse query (concept thesauri only)."
+    HIERARCHY
   }
   
   """
@@ -144,6 +147,24 @@ export const schema = (languages: string[]) => `
       timeoutMs: Int = 10000
     ): [TermsQueryResult]
     
+    "Browse a source's hierarchy: without uri the top concepts, with uri the direct narrower concepts of that concept. Only for sources with the HIERARCHY feature. A concept with several broader concepts appears under each of them; every node lists all its broader concepts."
+    browse(
+      "URI of a source with the HIERARCHY feature."
+      source: ID!,
+
+      "URI of the concept whose narrower concepts to return; omit for the top level."
+      uri: ID,
+
+      "Languages for the labels, in preferred order."
+      languages: [Language],
+
+      "Maximum number of nodes to return."
+      limit: Int = 500,
+
+      "Timeout period in milliseconds that we wait for the source to respond."
+      timeoutMs: Int = 10000
+    ): BrowseQueryResult
+
     "List all sources that can be queried for terms."
     sources(
       "List of genre URIs to filter sources by."
@@ -188,6 +209,34 @@ export const schema = (languages: string[]) => `
   }
 
   union TermsResult = Terms | TranslatedTerms | TimeoutError | ServerError
+
+  type BrowseQueryResult {
+    "The source that was browsed."
+    source: Source!
+    "The concept whose narrower concepts these are; null for the top level."
+    uri: ID
+    result: BrowseResult!
+    "Response time in milliseconds."
+    responseTimeMs: Int!
+    "Always false: the Termennetwerk queries sources live."
+    cached: Boolean!
+  }
+
+  union BrowseResult = BrowseNodes | TimeoutError | ServerError
+
+  type BrowseNodes {
+    nodes: [BrowseNode!]!
+  }
+
+  "A concept in a source's hierarchy."
+  type BrowseNode {
+    uri: ID!
+    prefLabel: [String]!
+    "Whether the concept has narrower concepts, i.e. can be expanded."
+    hasNarrower: Boolean!
+    "All broader concepts: more than one means the concept sits at several places in the hierarchy."
+    broader: [RelatedTerm]!
+  }
 
   type Terms {
     terms: [Term]

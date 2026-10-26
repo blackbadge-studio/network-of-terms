@@ -299,3 +299,19 @@ Example:
   "potentialAction": [...]
 }]
 ```
+
+### Hierarchical navigation (`vtn:BrowseAction`)
+
+A concept thesaurus can declare a third template next to search and lookup:
+
+```json
+{ "@type": "vtn:BrowseAction", "query": "file://../queries/browse/skos.rq" }
+```
+
+The template receives `?parent` (a concept, or the concept scheme – the dataset IRI – for the
+top level) and `#LIMIT#`, and constructs the direct narrower concepts with their `skos:prefLabel`,
+**all** their `skos:broader` concepts with labels (polyhierarchy is kept) and their own
+`skos:narrower` concepts (one is enough: it tells the client the node can be expanded). The
+source then gets the `HIERARCHY` feature and is browsable with the GraphQL `browse(source, uri)`
+query. Templates: `catalog-vlaams/queries/browse/skos.rq` (plain SKOS, e.g. VTMK) and `getty.rq`
+(AAT, TGN, following `gvp:broader`). Person sources get no browse template.

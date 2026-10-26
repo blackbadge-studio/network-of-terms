@@ -101,13 +101,7 @@
             "@id": "vtn:resultType"
           },
           "sh:in": {
-            "@list": [
-              "concept",
-              "person",
-              "organization",
-              "place",
-              "event"
-            ]
+            "@list": ["concept", "person", "organization", "place", "event"]
           },
           "sh:description": "Central result types this source yields. Omit when the source does not know; then each result's type is derived from its rdf:type."
         },
@@ -187,6 +181,28 @@
           "sh:minInclusive": 1,
           "sh:maxCount": 1,
           "sh:description": "Optional per-source timeout in milliseconds; the query engine uses the smaller of this value and the request timeout."
+        },
+        {
+          "sh:path": {
+            "@id": "schema:potentialAction"
+          },
+          "sh:qualifiedValueShape": {
+            "sh:class": {
+              "@id": "vtn:BrowseAction"
+            },
+            "sh:property": [
+              {
+                "sh:path": {
+                  "@id": "schema:query"
+                },
+                "sh:minCount": 1,
+                "sh:maxCount": 1
+              }
+            ]
+          },
+          "sh:qualifiedMinCount": 0,
+          "sh:qualifiedMaxCount": 1,
+          "sh:description": "Optional browse template for hierarchical navigation (concept sources only)."
         }
       ]
     },
@@ -307,13 +323,7 @@
             "@id": "vtn:resultType"
           },
           "sh:in": {
-            "@list": [
-              "concept",
-              "person",
-              "organization",
-              "place",
-              "event"
-            ]
+            "@list": ["concept", "person", "organization", "place", "event"]
           },
           "sh:minCount": 1,
           "sh:maxCount": 1

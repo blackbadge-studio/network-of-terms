@@ -1,0 +1,40 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+
+# Browse template for the Getty vocabularies (AAT, TGN). ?parent is a concept, or the dataset for
+# the top level (the scheme is the dataset IRI with a trailing slash, e.g. http://vocab.getty.edu/aat/).
+# Children follow gvp:broader, which includes non-preferred parents: Getty's polyhierarchy is kept,
+# and every node lists all its broader concepts.
+CONSTRUCT {
+    ?uri a skos:Concept ;
+        skos:prefLabel ?prefLabel ;
+        skos:broader ?broader_uri ;
+        skos:narrower ?child .
+    ?broader_uri skos:prefLabel ?broader_prefLabel .
+}
+WHERE {
+    {
+        SELECT DISTINCT ?uri WHERE {
+            {
+                BIND(IRI(CONCAT(STR(?parent), "/")) AS ?scheme)
+                ?scheme skos:hasTopConcept ?uri .
+            }
+            UNION { ?parent skos:hasTopConcept ?uri }
+            UNION { ?uri gvp:broader ?parent }
+        }
+        #LIMIT#
+    }
+    {
+        { ?uri gvp:prefLabelGVP/skosxl:literalForm ?prefLabel }
+        UNION {
+            ?uri gvp:broader ?broader_uri .
+            ?broader_uri gvp:prefLabelGVP/skosxl:literalForm ?broader_prefLabel .
+        }
+        UNION {
+            # One child is enough to know the node can be expanded.
+            { SELECT ?uri (SAMPLE(?c) AS ?child) WHERE { ?c gvp:broader ?uri } GROUP BY ?uri }
+        }
+    }
+}

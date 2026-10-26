@@ -829,6 +829,36 @@ describe('Server', () => {
     await cached.close();
   });
 
+  it('browses narrower concepts of a concept in a source with HIERARCHY', async () => {
+    const body = await query(
+      `query { browse(source: "https://data.rkd.nl/rkdartists", uri: "https://example.com/resources/art") {
+        uri cached source { uri features { type } }
+        result { __typename ... on BrowseNodes { nodes { uri prefLabel hasNarrower broader { uri } } } }
+      } }`,
+    );
+    const browse = body.data.browse;
+    expect(browse.uri).toEqual('https://example.com/resources/art');
+    expect(browse.cached).toBe(false);
+    expect(browse.source.features).toContainEqual({ type: 'HIERARCHY' });
+    expect(browse.result.__typename).toEqual('BrowseNodes');
+    const uris = browse.result.nodes.map((node: { uri: string }) => node.uri);
+    expect(uris).toContain('https://example.com/resources/artwork');
+    expect(uris).not.toContain('https://example.com/resources/art');
+  });
+
+  it('refuses to browse a source without HIERARCHY', async () => {
+    const response = await httpServer.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: { 'Content-Type': 'application/json' },
+      payload: {
+        query:
+          '{ browse(source: "https://data.cultureelerfgoed.nl/term/id/cht") { uri } }',
+      },
+    });
+    expect(response.json().errors[0].message).toMatch(/not (found|support)/);
+  });
+
   it('serves the acceptance scenarios and their runner under /tests', async () => {
     const scenarios = await httpServer.inject({
       method: 'GET',

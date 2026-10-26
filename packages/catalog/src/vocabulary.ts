@@ -12,4 +12,6 @@ export const vtn = {
   /** A rule mapping one of the source's own classes (`vtn:sourceType`) to a `vtn:resultType`. */
   typeMapping: `${VTN_NAMESPACE}typeMapping`,
   sourceType: `${VTN_NAMESPACE}sourceType`,
+  /** Third potentialAction next to SearchAction and FindAction: the browse template. */
+  BrowseAction: `${VTN_NAMESPACE}BrowseAction`,
 } as const;

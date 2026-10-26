@@ -208,6 +208,32 @@ export class QueryTermsService {
     return this.run(query, distribution, timeoutMs, bindings);
   }
 
+  /**
+   * The direct narrower concepts of `parent` (a concept IRI, or the concept scheme for the top
+   * level), through the source's browse template.
+   */
+  async browse(
+    parent: IRI,
+    distribution: Distribution,
+    limit: number,
+    timeoutMs: number,
+  ) {
+    if (distribution.browseQuery === undefined) {
+      throw new globalThis.Error(
+        `Source ${distribution.iri} does not support hierarchical navigation`,
+      );
+    }
+    return this.run(
+      distribution.browseQuery.replace(
+        '#LIMIT#',
+        `LIMIT ${Math.max(1, Math.min(limit, 1000))}`,
+      ),
+      distribution,
+      timeoutMs,
+      { parent: dataFactory.namedNode(parent.toString()) },
+    );
+  }
+
   async lookup(iris: IRI[], distribution: Distribution, timeoutMs: number) {
     return this.run(
       distribution.lookupQuery.replaceAll(

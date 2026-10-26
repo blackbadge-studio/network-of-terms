@@ -497,6 +497,82 @@
       }
     },
     {
+      "id": "API-40",
+      "area": "hierarchie",
+      "title": "Bladeren: topconcepten van VTMK",
+      "requirement": ["F5.1"],
+      "kind": "graphql",
+      "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\") { uri result { __typename ... on BrowseNodes { nodes { uri prefLabel hasNarrower } } } } }",
+      "checks": [
+        {
+          "path": "data.browse.result.__typename",
+          "equals": "BrowseNodes"
+        },
+        {
+          "path": "data.browse.result.nodes",
+          "length": {
+            "min": 5
+          }
+        },
+        {
+          "path": "data.browse.result.nodes[*].hasNarrower",
+          "some": true,
+          "equals": true,
+          "label": "minstens één knoop is uitklapbaar"
+        },
+        {
+          "path": "data.browse.result.nodes[*].prefLabel",
+          "some": true,
+          "contains": "kleding"
+        }
+      ]
+    },
+    {
+      "id": "API-41",
+      "area": "hierarchie",
+      "title": "Bladeren: nauwere termen van \"kleding\" met hun bredere term",
+      "requirement": ["F5.1", "F2.23"],
+      "kind": "graphql",
+      "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\", uri: \"https://vtmk.data.momu.be/id/105730\") { result { ... on BrowseNodes { nodes { prefLabel broader { uri } } } } } }",
+      "checks": [
+        {
+          "path": "data.browse.result.nodes[*].prefLabel",
+          "some": true,
+          "contains": "ondergoed"
+        },
+        {
+          "path": "data.browse.result.nodes[*].broader[*].uri",
+          "some": true,
+          "equals": "https://vtmk.data.momu.be/id/105730"
+        }
+      ]
+    },
+    {
+      "id": "API-42",
+      "area": "hierarchie",
+      "title": "Alleen conceptbronnen bieden bladeren aan",
+      "requirement": ["F5.1", "F3.9"],
+      "kind": "graphql",
+      "query": "{ sources { uri features { type } } }",
+      "checks": [
+        {
+          "path": "data.sources[*].features[*].type",
+          "some": true,
+          "equals": "HIERARCHY"
+        }
+      ]
+    },
+    {
+      "id": "API-43",
+      "area": "hierarchie",
+      "title": "Bladeren in een personenbron geeft een duidelijke fout",
+      "requirement": ["F5.1"],
+      "kind": "graphql",
+      "query": "{ browse(source: \"https://data.rkd.nl/rkdartists\") { uri } }",
+      "checks": [],
+      "expectError": true
+    },
+    {
       "id": "API-19",
       "area": "status",
       "title": "Elke bron heeft een actuele status uit de eigen monitor",

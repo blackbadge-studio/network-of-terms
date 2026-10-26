@@ -1,0 +1,35 @@
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+# Browse template for plain SKOS thesauri. ?parent is a concept, or the concept scheme for the top
+# level. Returns the direct narrower concepts with their labels, ALL their broader concepts (a
+# concept with several broader concepts appears under each; polyhierarchy is kept) and their own
+# narrower concepts, which tell the client whether a node can be expanded.
+CONSTRUCT {
+    ?uri a skos:Concept ;
+        skos:prefLabel ?prefLabel ;
+        skos:broader ?broader_uri ;
+        skos:narrower ?child .
+    ?broader_uri skos:prefLabel ?broader_prefLabel .
+}
+WHERE {
+    {
+        SELECT DISTINCT ?uri WHERE {
+            { ?parent skos:hasTopConcept ?uri }
+            UNION { ?uri skos:topConceptOf ?parent }
+            UNION { ?uri skos:broader ?parent }
+            UNION { ?parent skos:narrower ?uri }
+        }
+        #LIMIT#
+    }
+    # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
+    # see “One UNION branch per multi-valued property” in the catalog README.
+    {
+        { ?uri skos:prefLabel ?prefLabel }
+        UNION {
+            ?uri skos:broader ?broader_uri .
+            ?broader_uri skos:prefLabel ?broader_prefLabel .
+        }
+        UNION { ?uri skos:narrower ?child }
+        UNION { ?child skos:broader ?uri }
+    }
+}

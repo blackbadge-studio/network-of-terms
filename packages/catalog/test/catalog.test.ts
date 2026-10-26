@@ -241,6 +241,16 @@ describe('Catalog', () => {
     expect(aat.getSparqlDistribution()!.searchQuery).toContain('luc:term');
     expect(aat.getSparqlDistribution()!.timeoutMs).toBe(8000);
     expect(aat.resultTypes).toEqual(['concept']);
+    // Concept thesauri carry a browse template and the HIERARCHY feature; person sources do not.
+    const vtmk = vlaams.getDatasetByIri('https://vtmk.data.momu.be/id/100001')!;
+    expect(vtmk.getSparqlDistribution()!.browseQuery).toContain('?parent');
+    expect(
+      vtmk.getSparqlDistribution()!.hasFeature(FeatureType.HIERARCHY),
+    ).toBe(true);
+    const rkd = vlaams.getDatasetByIri('https://data.rkd.nl/rkdartists')!;
+    expect(rkd.getSparqlDistribution()!.hasFeature(FeatureType.HIERARCHY)).toBe(
+      false,
+    );
     // Flemish Wikidata subsets route lookups to the unrestricted dataset that owns the prefix.
     expect(
       vlaams.getDatasetByTermIri('http://www.wikidata.org/entity/Q5599')?.iri,
