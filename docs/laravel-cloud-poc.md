@@ -19,7 +19,7 @@ One Cloud application runs both services from the repository root:
 - Start command: `npm start`
 - Background process: `npm run start:status`
   Cloud sets `PORT=3000` for every process in the container, so the root `start:status` script overrides it to `STATUS_PORT` (default `3001`) to keep the monitor off the web server's port.
-- Resources: attach a Postgres database (Cloud injects `DATABASE_URL`, which the status service reads).
+- Resources: attach a Postgres database (Cloud injects `DATABASE_URL`, which the status service reads) and a Laravel Valkey cache (Cloud injects `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`, which the result cache reads; see `docs/vlaams-termennetwerk/cache.md`).
 
 ## Environment variables
 
@@ -29,6 +29,8 @@ One Cloud application runs both services from the repository root:
 | `STATUS_SERVICE_URL`       | `http://127.0.0.1:3001`    |
 | `LDES_BASE_URL`            | `https://<app-url>/status` |
 | `POLLING_INTERVAL_SECONDS` | `300`                      |
+| `CACHE_TTL_TERMS`          | `120`                      |
+| `CACHE_TTL_LOOKUP`         | `600`                      |
 | `LOG_LEVEL`                | `info`                     |
 
 `GTAA_CREDENTIALS` is only needed for the Dutch GTAA sources; leave it unset and those sources fail, which is fine for the POC.
