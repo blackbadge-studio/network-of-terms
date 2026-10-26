@@ -38,11 +38,11 @@ oud zijn; stuur `Cache-Control: no-cache` voor een live antwoord").
 
 ## Backends
 
-| Omgeving                    | Backend                                                                          | Hoe                                                                                                                         |
-| --------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Lokaal / één replica        | geheugen (LRU, `CACHE_MAX_ENTRIES`, standaard 5 000)                             | geen `REDIS_*`-variabelen, wel een TTL                                                                                      |
-| Laravel Cloud (POC)         | Laravel Valkey `network-of-terms` (flex 250 MB, slaapt na 15 min, `allkeys-lru`) | cache aan de omgeving gekoppeld; Cloud injecteert `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`            |
-| meemoo-infrastructuur (AKS) | Redis of Valkey (Azure Cache for Redis, of een Valkey-container in de cluster)   | `REDIS_URL=rediss://…` of `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`; TLS standaard aan tenzij `localhost` (`REDIS_TLS=auto | true | false`) |
+| Omgeving                    | Backend                                                                          | Hoe                                                                                                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lokaal / één replica        | geheugen (LRU, `CACHE_MAX_ENTRIES`, standaard 5 000)                             | geen `REDIS_*`-variabelen, wel een TTL                                                                                                                        |
+| Laravel Cloud (POC)         | Laravel Valkey `network-of-terms` (flex 250 MB, slaapt na 15 min, `allkeys-lru`) | cache aan de omgeving gekoppeld; Cloud injecteert `REDIS_URL` (`rediss://`, TLS) naast de losse `REDIS_*`-velden; niets zelf te configureren behalve de TTL's |
+| meemoo-infrastructuur (AKS) | Redis of Valkey (Azure Cache for Redis, of een Valkey-container in de cluster)   | `REDIS_URL=rediss://…` of `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`; TLS standaard aan tenzij `localhost` (`REDIS_TLS=auto                                   | true | false`) |
 
 Met meer dan één API-replica is een gedeelde backend nodig, anders heeft elke
 replica een eigen cache en daalt de trefkans. Een cache die onbereikbaar of
@@ -63,8 +63,21 @@ misser.
 
 ## Opvolging
 
-`GET /health` toont de backend, de TTL's en tellers voor hits, misses,
+`GET /health` toont de backend, de TTL's, de verbinding (host, poort, TLS, klaar, laatste fout; nooit het wachtwoord) en tellers voor hits, misses,
 schrijfacties en fouten sinds de start van de replica. Laravel Cloud toont
 daarnaast de hit/miss-ratio van de Valkey-cache onder Organization › Resources
 › Caches. Een invalidatie per bron is er niet: wie een bron aanpast, ziet de
 wijziging na maximaal één TTL.
+
+## Gemeten op Laravel Cloud (26 oktober 2026)
+
+Zoekvraag "Rubens" over drie bronnen (Wikidata-personen, Gentse thesaurus, RKDartists):
+
+| Poging                        | Wikidata | Gent   | RKD    |
+| ----------------------------- | -------- | ------ | ------ |
+| eerste (live)                 | 924 ms   | 576 ms | 106 ms |
+| tweede (cache)                | 103 ms   | 103 ms | 103 ms |
+| met `Cache-Control: no-cache` | 827 ms   | 530 ms | 56 ms  |
+
+Het hele antwoord uit de cache duurt rond 100 ms: één ronde naar Valkey plus
+de verwerking in de API. Het levert vooral winst op bij trage bronnen.
