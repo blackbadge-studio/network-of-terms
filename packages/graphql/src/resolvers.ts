@@ -33,6 +33,7 @@ import {
 import * as RDF from '@rdfjs/types';
 import { dereferenceGenre } from '@netwerk-digitaal-erfgoed/network-of-terms-catalog';
 import type { StatusClient } from './status.js';
+import { cacheKey, type ResultCache } from './cache.js';
 import { config } from './config.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,25 +82,115 @@ async function queryTerms(
   if (sources.length === 0) {
     return [];
   }
-  const service = new DistributionsService({
-    logger: context.app.log,
-    catalog,
-  });
-  const results = await service.queryAll({
-    sources,
-    genres: args.genres,
-    query: args.query,
-    queryMode: QueryMode[args.queryMode as keyof typeof QueryMode],
-    limit: args.limit,
-    timeoutMs: args.timeoutMs,
-  });
-  return resolveTermsResponse(
-    results.map((response) => filterByResultTypes(response, types, catalog)),
-    context.catalog,
-    [...(args.languages ?? []), context.catalogLanguage][0],
-    args.languages,
-    context.statusClient,
-  );
+  const started = performance.now();
+  const catalogLanguage = [
+    ...(args.languages ?? []),
+    context.catalogLanguage,
+  ][0];
+  const cache: ResultCache = context.cache;
+  const ttl: number = context.cacheTtl?.terms ?? 0;
+  const keyFor = (source: string) =>
+    cacheKey('terms', [
+      source,
+      args.query,
+      args.queryMode,
+      args.limit,
+      args.genres ?? null,
+      args.languages ?? null,
+      types,
+    ]);
+
+  // Cached sources first; only the rest are queried live.
+  const hits = new Map<string, CachedTerms>();
+  if (ttl > 0 && !context.cacheBypass) {
+    await Promise.all(
+      sources.map(async (source) => {
+        const hit = await cache.get<CachedTerms>(keyFor(source));
+        if (hit) {
+          hits.set(source, hit);
+        }
+      }),
+    );
+  }
+  const misses = sources.filter((source) => !hits.has(source));
+
+  const entries = new Map<string, unknown>();
+  if (misses.length > 0) {
+    const service = new DistributionsService({
+      logger: context.app.log,
+      catalog,
+    });
+    const responses = (
+      await service.queryAll({
+        sources: misses,
+        genres: args.genres,
+        query: args.query,
+        queryMode: QueryMode[args.queryMode as keyof typeof QueryMode],
+        limit: args.limit,
+        timeoutMs: args.timeoutMs,
+      })
+    ).map((response) => filterByResultTypes(response, types, catalog));
+    const resolved = resolveTermsResponse(
+      responses,
+      catalog,
+      catalogLanguage,
+      args.languages,
+      context.statusClient,
+    );
+    await Promise.all(
+      responses.map(async (response, index) => {
+        // queryAll answers in the order of the sources it was given.
+        const datasetIri = misses[index];
+        const entry = resolved[index] as {
+          result: unknown;
+          terms: object[];
+        };
+        entries.set(datasetIri, { ...entry, cached: false });
+        // Only successful answers are cached: an error or timeout must be retried live.
+        if (ttl > 0 && response.result instanceof Terms) {
+          const translated = entry.result instanceof TranslatedTerms;
+          await cache.set(
+            keyFor(datasetIri),
+            {
+              translated,
+              terms: translated
+                ? (entry.result as TranslatedTerms).terms
+                : entry.terms,
+              bcTerms: entry.terms,
+            } satisfies CachedTerms,
+            ttl,
+          );
+        }
+      }),
+    );
+  }
+
+  const elapsed = Math.round(performance.now() - started);
+  for (const [datasetIri, hit] of hits) {
+    const dataset = catalog.getDatasetByIri(datasetIri)!;
+    entries.set(datasetIri, {
+      source: source(
+        dataset.getSparqlDistribution()!,
+        dataset,
+        catalogLanguage,
+        context.statusClient,
+      ),
+      result: hit.translated
+        ? new TranslatedTerms(hit.terms)
+        : { terms: hit.terms },
+      responseTimeMs: elapsed,
+      terms: hit.bcTerms, // For BC.
+      cached: true,
+    });
+  }
+  return sources.map((source) => entries.get(source)).filter(Boolean);
+}
+
+/** What the result cache keeps per source: the mapped terms, ready to serve. */
+interface CachedTerms {
+  translated: boolean;
+  terms: object[];
+  bcTerms: object[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,19 +204,38 @@ async function lookupTerms(object: any, args: any, context: any) {
     );
   }
 
+  const started = performance.now();
+  const cache: ResultCache = context.cache;
+  const ttl: number = context.cacheTtl?.lookup ?? 0;
+  const keyFor = (uri: string) =>
+    cacheKey('lookup', [uri, args.languages ?? null]);
+  const hits = new Map<string, CachedLookup>();
+  if (ttl > 0 && !context.cacheBypass) {
+    await Promise.all(
+      (args.uris as string[]).map(async (uri) => {
+        const hit = await cache.get<CachedLookup>(keyFor(uri));
+        if (hit) {
+          hits.set(uri, hit);
+        }
+      }),
+    );
+  }
+  const misses = (args.uris as string[]).filter((uri) => !hits.has(uri));
+  const catalogLanguage = [
+    ...(args.languages ?? []),
+    context.catalogLanguage,
+  ][0];
+
   const service = new LookupService(
     context.catalog,
     new QueryTermsService({
       logger: context.app.log,
     }),
   );
-  const results = await service.lookup(args.uris, args.timeoutMs);
-  const catalogLanguage = [
-    ...(args.languages ?? []),
-    context.catalogLanguage,
-  ][0];
+  const results =
+    misses.length > 0 ? await service.lookup(misses, args.timeoutMs) : [];
 
-  return results.map((result: LookupQueryResult) => {
+  const fresh = results.map((result: LookupQueryResult) => {
     const dataset =
       result.distribution instanceof SourceNotFoundError
         ? undefined
@@ -150,8 +260,61 @@ async function lookupTerms(object: any, args: any, context: any) {
             : mapToTranslatedTerm(result.result, args.languages, dataset)
           : result.result,
       responseTimeMs: result.responseTimeMs,
+      cached: false,
     };
   });
+
+  // Only found terms are cached; not-found and errors are retried live next time.
+  if (ttl > 0) {
+    await Promise.all(
+      results.map(async (result: LookupQueryResult, index: number) => {
+        if (
+          result.result instanceof Term &&
+          !(result.distribution instanceof SourceNotFoundError)
+        ) {
+          await cache.set(
+            keyFor(result.uri),
+            {
+              distributionIri: result.distribution.iri,
+              result: fresh[index].result,
+            } satisfies CachedLookup,
+            ttl,
+          );
+        }
+      }),
+    );
+  }
+
+  const elapsed = Math.round(performance.now() - started);
+  const byUri = new Map(fresh.map((entry) => [entry.uri, entry]));
+  return (args.uris as string[])
+    .map((uri) => {
+      const hit = hits.get(uri);
+      if (hit === undefined) {
+        return byUri.get(uri);
+      }
+      const dataset = context.catalog.getDatasetByDistributionIri(
+        hit.distributionIri,
+      )!;
+      return {
+        uri,
+        source: source(
+          dataset.getDistributionByIri(hit.distributionIri)!,
+          dataset,
+          catalogLanguage,
+          context.statusClient,
+        ),
+        result: hit.result,
+        responseTimeMs: elapsed,
+        cached: true,
+      };
+    })
+    .filter(Boolean);
+}
+
+interface CachedLookup {
+  distributionIri: string;
+  result: unknown;
 }
 
 function resolveTermsResponse(

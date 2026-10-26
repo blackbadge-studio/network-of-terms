@@ -17,6 +17,7 @@ import { EnvSchemaData } from 'env-schema';
 import mercuriusLogging from 'mercurius-logging';
 import fastifyAccepts from '@fastify/accepts';
 import { StatusClient } from './status.js';
+import { CacheConfig, createCache } from './cache.js';
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -60,6 +61,13 @@ export async function server(
     server.log,
   );
 
+  const cache = createCache(config as unknown as CacheConfig, server.log);
+  const cacheTtl = {
+    terms: Number(config.CACHE_TTL_TERMS ?? 0),
+    lookup: Number(config.CACHE_TTL_LOOKUP ?? 0),
+  };
+  server.addHook('onClose', async () => cache.close());
+
   await server.register(fastifyAccepts);
   await server.register(mercurius, {
     schema: schema(catalog.getLanguages()),
@@ -70,6 +78,10 @@ export async function server(
         catalog,
         catalogLanguage: req.language(['nl', 'en']) || 'nl',
         statusClient,
+        cache,
+        cacheTtl,
+        // Clients that need a live answer (monitoring, the simulator) can skip cached results.
+        cacheBypass: (req.headers['cache-control'] ?? '').includes('no-cache'),
       };
     },
   });
@@ -98,6 +110,11 @@ export async function server(
         status: 'ok',
         version,
         catalog: { sources: catalog.datasets.length },
+        cache: {
+          ...cache.stats(),
+          ttlTerms: cacheTtl.terms,
+          ttlLookup: cacheTtl.lookup,
+        },
         statusService: {
           url: config.STATUS_SERVICE_URL,
           reachable: lastStatusRefresh !== null,

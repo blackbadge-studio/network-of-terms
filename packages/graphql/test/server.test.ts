@@ -774,6 +774,61 @@ describe('Server', () => {
     );
   });
 
+  it('serves a repeated search from the result cache, and live with no-cache', async () => {
+    const cached = await server(catalog, {
+      ...config,
+      CACHE_TTL_TERMS: 60,
+      CACHE_TTL_LOOKUP: 60,
+    });
+    const run = async (headers: Record<string, string> = {}) =>
+      (
+        await cached.inject({
+          method: 'POST',
+          url: '/graphql',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          payload: {
+            query: `query { terms(sources: ["https://data.rkd.nl/rkdartists"], query: "rembrandt") {
+              cached responseTimeMs result { ... on Terms { terms { uri prefLabel resultType } } }
+            } }`,
+          },
+        })
+      ).json().data.terms[0];
+    const first = await run();
+    const second = await run();
+    const live = await run({ 'Cache-Control': 'no-cache' });
+    expect(first.cached).toBe(false);
+    expect(second.cached).toBe(true);
+    expect(second.result).toEqual(first.result);
+    expect(live.cached).toBe(false);
+
+    const lookup = async () =>
+      (
+        await cached.inject({
+          method: 'POST',
+          url: '/graphql',
+          headers: { 'Content-Type': 'application/json' },
+          payload: {
+            query: `query { lookup(uris: ["https://example.com/resources/rembrandt"]) {
+              cached source { ... on Source { uri } } result { ... on Term { uri prefLabel } }
+            } }`,
+          },
+        })
+      ).json().data.lookup[0];
+    const lookupFirst = await lookup();
+    const lookupSecond = await lookup();
+    expect(lookupFirst.cached).toBe(false);
+    expect(lookupSecond.cached).toBe(true);
+    expect(lookupSecond.result).toEqual(lookupFirst.result);
+    expect(lookupSecond.source).toEqual(lookupFirst.source);
+
+    const health = (
+      await cached.inject({ method: 'GET', url: '/health' })
+    ).json();
+    expect(health.cache).toMatchObject({ backend: 'memory', ttlTerms: 60 });
+    expect(health.cache.hits).toBeGreaterThanOrEqual(2);
+    await cached.close();
+  });
+
   it('reports health with the loaded catalog and status service state', async () => {
     const response = await httpServer.inject({ method: 'GET', url: '/health' });
     expect(response.statusCode).toEqual(200);

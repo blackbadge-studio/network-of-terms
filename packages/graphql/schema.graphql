@@ -182,6 +182,9 @@
     
     "Response time in milliseconds."
     responseTimeMs: Int!
+
+    "Whether this source's result came from the short-lived result cache instead of a live query. Send the header Cache-Control: no-cache to always query live."
+    cached: Boolean!
   }
 
   union TermsResult = Terms | TranslatedTerms | TimeoutError | ServerError
@@ -348,6 +351,9 @@
     
     "Response time in milliseconds."
     responseTimeMs: Int!
+  
+    "Whether this result came from the short-lived result cache instead of a live lookup."
+    cached: Boolean!
   }
 
   union SourceResult = Source | SourceNotFoundError
