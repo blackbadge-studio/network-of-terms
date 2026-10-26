@@ -285,13 +285,21 @@ export function createCache(
   if (!config.REDIS_URL && !config.REDIS_HOST) {
     return new MemoryCache(config.CACHE_MAX_ENTRIES);
   }
-  if (config.REDIS_URL) {
-    return new ValkeyCache(config.REDIS_URL, logger);
-  }
-  const host = config.REDIS_HOST!;
+  // A URL (Laravel Cloud injects one next to the separate fields) is split into fields, so that
+  // REDIS_SCHEME and the TLS fallback below apply to it too.
+  const url = config.REDIS_URL ? new URL(config.REDIS_URL) : undefined;
+  const host = url?.hostname || config.REDIS_HOST!;
+  const port = url?.port ? Number(url.port) : config.REDIS_PORT;
+  const username = url?.username
+    ? decodeURIComponent(url.username)
+    : config.REDIS_USERNAME;
+  const password = url?.password
+    ? decodeURIComponent(url.password)
+    : config.REDIS_PASSWORD;
   const local = host === 'localhost' || host === '127.0.0.1';
   // REDIS_SCHEME (as Laravel uses it: tcp or tls) wins over REDIS_TLS.
   const scheme = (config.REDIS_SCHEME ?? '').toLowerCase();
+  const urlTls = url?.protocol === 'rediss:';
   const tls: boolean | 'auto' =
     scheme === 'tls' || scheme === 'rediss'
       ? true
@@ -299,17 +307,8 @@ export function createCache(
         ? false
         : config.REDIS_TLS === 'true'
           ? true
-          : config.REDIS_TLS === 'false' || local
+          : config.REDIS_TLS === 'false' || local || (url && !urlTls)
             ? false
             : 'auto';
-  return new ValkeyCache(
-    {
-      host,
-      port: config.REDIS_PORT,
-      username: config.REDIS_USERNAME,
-      password: config.REDIS_PASSWORD,
-      tls,
-    },
-    logger,
-  );
+  return new ValkeyCache({ host, port, username, password, tls }, logger);
 }
