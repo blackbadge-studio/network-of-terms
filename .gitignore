@@ -50,3 +50,5 @@ vitest.config.*.timestamp*
 .claude/settings.local.json
 .nx/polygraph
 .nx/self-healing
+# Acceptance scenario reports (npm run test:scenarios)
+test-results/
