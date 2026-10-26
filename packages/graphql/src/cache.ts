@@ -23,6 +23,8 @@ export interface CacheStats {
     tls: boolean;
     ready: boolean;
     lastError?: string;
+    hasUsername: boolean;
+    hasPassword: boolean;
   };
   hits: number;
   misses: number;
@@ -225,6 +227,14 @@ export class ValkeyCache extends CountingCache {
         tls: this.tls,
         ready: this.ready,
         lastError: this.lastError,
+        hasUsername:
+          typeof this.target === 'string'
+            ? new URL(this.target).username !== ''
+            : !!this.target.username,
+        hasPassword:
+          typeof this.target === 'string'
+            ? new URL(this.target).password !== ''
+            : !!this.target.password,
       },
     };
   }
