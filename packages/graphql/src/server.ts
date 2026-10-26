@@ -110,6 +110,7 @@ export async function server(
         status: 'ok',
         version,
         catalog: { sources: catalog.datasets.length },
+        reconciliation: { enabled: reconciliationEnabled },
         cache: {
           ...cache.stats(),
           ttlTerms: cacheTtl.terms,
@@ -167,6 +168,77 @@ export async function server(
       req.log.warn({ err: error }, 'Status service unreachable');
       return reply.status(502).send({ error: 'Status service unreachable' });
     }
+  }
+
+  // Reconciliation Service API (OpenRefine), off by default: outside the MVP (bestek §3.2). When
+  // RECONCILIATION_ENABLED is true, requests pass through to the reconciliation process, which
+  // runs next to this server without a public port. Its manifests build URLs from the forwarded
+  // host, so the public address is passed along.
+  const reconciliationEnabled = config.RECONCILIATION_ENABLED === true;
+  const reconciliationBase = String(
+    config.RECONCILIATION_SERVICE_URL ?? 'http://127.0.0.1:3002',
+  ).replace(/\/$/, '');
+  server.addContentTypeParser(
+    'application/x-www-form-urlencoded',
+    { parseAs: 'string' },
+    (req, body, done) => done(null, body),
+  );
+  const reconciliationRoutes = [
+    '/reconcile',
+    '/reconcile/*',
+    '/extend',
+    '/extend/*',
+    '/preview/*',
+  ];
+  for (const url of reconciliationRoutes) {
+    server.route({
+      method: ['GET', 'POST'],
+      url,
+      handler: async (req, reply) => {
+        if (!reconciliationEnabled) {
+          return reply.status(404).send({
+            error:
+              'Reconciliation is uitgeschakeld (RECONCILIATION_ENABLED=false).',
+          });
+        }
+        const body =
+          req.method === 'POST'
+            ? typeof req.body === 'string'
+              ? req.body
+              : JSON.stringify(req.body ?? {})
+            : undefined;
+        try {
+          const upstream = await fetch(reconciliationBase + req.url, {
+            method: req.method,
+            headers: {
+              Accept: req.headers.accept ?? '*/*',
+              'Accept-Language':
+                (req.headers['accept-language'] as string) ?? 'nl',
+              ...(body !== undefined
+                ? {
+                    'Content-Type':
+                      req.headers['content-type'] ?? 'application/json',
+                  }
+                : {}),
+              'X-Forwarded-Host': req.hostname,
+              'X-Forwarded-Proto': req.protocol,
+            },
+            body,
+            signal: AbortSignal.timeout(30_000),
+          });
+          const contentType = upstream.headers.get('content-type');
+          if (contentType) {
+            void reply.header('Content-Type', contentType);
+          }
+          return reply.status(upstream.status).send(await upstream.text());
+        } catch (error) {
+          req.log.warn({ err: error }, 'Reconciliation service unreachable');
+          return reply
+            .status(502)
+            .send({ error: 'Reconciliation service unreachable' });
+        }
+      },
+    });
   }
 
   // Acceptance scenarios and their runner, so the simulator in the search interface runs exactly

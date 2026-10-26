@@ -41,3 +41,7 @@ At startup the catalog loader fetches the JSON-LD context from `https://schema.o
 
     curl https://<app-url>/graphql -H 'content-type: application/json' \
       -d '{"query":"{ terms(sources:[\"http://vocab.getty.edu/aat\"], query:\"fotografie\", limit: 3) { source { name } result { ... on Terms { terms { uri prefLabel } } } responseTimeMs } }"}'
+
+## Reconciliation (off by default)
+
+The Reconciliation Service API is built but switched off (`RECONCILIATION_ENABLED` unset). To turn it on, set `RECONCILIATION_ENABLED=true`, `RECONCILIATION_URL_TEMPLATE=https://<app-url>/reconcile/{dataset}` and `VIEW_URL_TEMPLATE`, and add a background process `npm run start:reconciliation` (internal port 3002). See `docs/vlaams-termennetwerk/reconciliation.md`.

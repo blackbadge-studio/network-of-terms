@@ -14,7 +14,12 @@ try {
     await httpServer.close();
     await shutdownInstrumentation();
   });
-  await httpServer.listen({ port: 3123, host: '0.0.0.0' });
+  // PORT is set by the platform; next to the GraphQL API it runs on RECONCILIATION_PORT (see the
+  // root start:reconciliation script).
+  await httpServer.listen({
+    port: Number(process.env.PORT) || 3123,
+    host: process.env.HOST || '::',
+  });
 } catch (err) {
   console.error(err);
   process.exitCode = 1;

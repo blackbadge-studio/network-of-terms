@@ -5,9 +5,10 @@
     "./packages/*"
   ],
   "scripts": {
-    "build": "nx run-many -t build -p graphql,status",
+    "build": "nx run-many -t build -p graphql,status,reconciliation",
     "prepare": "husky",
     "start": "node packages/graphql/dist/main.js",
+    "start:reconciliation": "PORT=${RECONCILIATION_PORT:-3002} TRUST_PROXY=${TRUST_PROXY:-true} node packages/reconciliation/dist/main.js",
     "start:status": "PORT=${STATUS_PORT:-3001} node packages/status/dist/main.js",
     "test:scenarios": "node scripts/run-scenarios.mjs"
   },

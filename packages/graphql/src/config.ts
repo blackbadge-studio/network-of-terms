@@ -56,6 +56,19 @@ const schema = {
       description:
         "'true', 'false', or 'auto' (TLS unless the host is localhost).",
     },
+    RECONCILIATION_ENABLED: {
+      type: 'boolean',
+      default: false,
+      description:
+        'Serve the Reconciliation Service API (OpenRefine) under /reconcile, /extend and /preview by ' +
+        'proxying to the reconciliation process. Off by default: outside the MVP (bestek §3.2).',
+    },
+    RECONCILIATION_SERVICE_URL: {
+      type: 'string',
+      default: 'http://127.0.0.1:3002',
+      description:
+        'Where the reconciliation process listens (npm run start:reconciliation).',
+    },
     MAX_LOOKUP_URIS: {
       type: 'number',
       default: 1000,
@@ -73,6 +86,8 @@ interface Env {
   STATUS_SERVICE_URL: string;
   LOG_LEVEL: string;
   MAX_LOOKUP_URIS: number;
+  RECONCILIATION_ENABLED: boolean;
+  RECONCILIATION_SERVICE_URL: string;
   CACHE_TTL_TERMS: number;
   CACHE_TTL_LOOKUP: number;
   CACHE_MAX_ENTRIES: number;

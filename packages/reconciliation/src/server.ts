@@ -44,8 +44,7 @@ export async function server(
   server.addHook('onRequest', (request, reply, done) => {
     request.root = request.protocol + '://' + request.hostname;
     request.preferredLanguage = (request.languages(['nl', 'en']) || 'nl') as
-      | 'nl'
-      | 'en';
+      'nl' | 'en';
     done();
   });
 

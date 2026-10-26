@@ -272,6 +272,30 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
               if (searchQuery.includes('?genres')) {
                 features.push(new Feature(FeatureType.GENRE_FILTER));
               }
+              // Our own Reconciliation Service API, off by default (outside the MVP, bestek §3.2):
+              // with RECONCILIATION_ENABLED=true every source gets the feature, pointing at
+              // RECONCILIATION_URL_TEMPLATE ({dataset} is replaced), unless it declares one.
+              const reconciliationTemplate =
+                process.env.RECONCILIATION_URL_TEMPLATE;
+              if (
+                process.env.RECONCILIATION_ENABLED === 'true' &&
+                reconciliationTemplate &&
+                !features.some(
+                  (feature) => feature.type === FeatureType.RECONCILIATION,
+                )
+              ) {
+                features.push(
+                  new Feature(
+                    FeatureType.RECONCILIATION,
+                    new URL(
+                      reconciliationTemplate.replace(
+                        '{dataset}',
+                        encodeURIComponent(dataset.$id),
+                      ),
+                    ),
+                  ),
+                );
+              }
               const browseQuery = dataset.distribution!.potentialAction.find(
                 (action) => action.types.includes(vtn.BrowseAction),
               )?.query;
