@@ -46,6 +46,10 @@ const schema = {
     REDIS_PORT: { type: 'number', default: 6379 },
     REDIS_USERNAME: { type: 'string' },
     REDIS_PASSWORD: { type: 'string' },
+    REDIS_SCHEME: {
+      type: 'string',
+      description: "Laravel-style 'tcp' or 'tls'; wins over REDIS_TLS.",
+    },
     REDIS_TLS: {
       type: 'string',
       default: 'auto',
@@ -78,6 +82,7 @@ interface Env {
   REDIS_USERNAME?: string;
   REDIS_PASSWORD?: string;
   REDIS_TLS: string;
+  REDIS_SCHEME?: string;
 }
 
 export const config: JSONSchemaType<Env> = envSchema({

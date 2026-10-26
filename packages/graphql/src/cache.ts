@@ -17,6 +17,13 @@ export interface ResultCache {
 
 export interface CacheStats {
   backend: ResultCache['backend'];
+  connection?: {
+    host: string;
+    port: number;
+    tls: boolean;
+    ready: boolean;
+    lastError?: string;
+  };
   hits: number;
   misses: number;
   writes: number;
@@ -33,6 +40,7 @@ export interface CacheConfig {
   REDIS_USERNAME?: string;
   REDIS_PASSWORD?: string;
   REDIS_TLS: string;
+  REDIS_SCHEME?: string;
 }
 
 const PREFIX = 'vtn:cache:v1:';
@@ -127,18 +135,98 @@ export class MemoryCache extends CountingCache {
  * REDIS_PORT, REDIS_USERNAME and REDIS_PASSWORD when a cache is attached), or any Redis/Valkey.
  * A cache that is down or slow never fails a request: every error counts as a miss.
  */
+export interface ValkeyTarget {
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  /** true, false, or 'auto': try TLS first and fall back to plain TCP if the server resets it. */
+  tls: boolean | 'auto';
+}
+
 export class ValkeyCache extends CountingCache {
   readonly backend = 'valkey' as const;
+  private client: Redis;
+  private tls: boolean;
+  private ready = false;
+  private lastError?: string;
 
   constructor(
-    private readonly client: Redis,
+    private readonly target: ValkeyTarget | string,
     private readonly logger?: FastifyBaseLogger,
   ) {
     super();
-    client.on('error', (error) => {
+    this.tls =
+      typeof target === 'string'
+        ? target.startsWith('rediss:')
+        : target.tls !== false;
+    this.client = this.connect();
+  }
+
+  private connect(): Redis {
+    const common = {
+      // Fail fast instead of queueing: a slow cache must not slow down search.
+      enableOfflineQueue: false,
+      maxRetriesPerRequest: 1,
+      connectTimeout: 2000,
+      commandTimeout: 500,
+    };
+    const client =
+      typeof this.target === 'string'
+        ? new Redis(this.target, common)
+        : new Redis({
+            ...common,
+            host: this.target.host,
+            port: this.target.port,
+            username: this.target.username || undefined,
+            password: this.target.password || undefined,
+            tls: this.tls ? { servername: this.target.host } : undefined,
+          });
+    client.on('ready', () => {
+      this.ready = true;
+      this.logger?.info({ tls: this.tls }, 'Cache connected');
+    });
+    client.on('error', (error: NodeJS.ErrnoException) => {
       this.counters.errors++;
+      this.lastError = error.code ?? error.message;
+      // Laravel Cloud's private Valkey endpoint may speak plain TCP: a TLS handshake against it is
+      // reset before the first ready. Switch once, then keep whatever works.
+      if (
+        !this.ready &&
+        typeof this.target !== 'string' &&
+        this.target.tls === 'auto' &&
+        this.tls &&
+        (error.code === 'ECONNRESET' || /SSL|TLS|EPROTO/i.test(error.message))
+      ) {
+        this.logger?.warn('Cache TLS handshake reset; retrying without TLS');
+        this.tls = false;
+        const old = this.client;
+        this.client = this.connect();
+        old.disconnect();
+        return;
+      }
       this.logger?.warn({ err: error }, 'Cache connection error');
     });
+    return client;
+  }
+
+  override stats(): CacheStats {
+    return {
+      ...super.stats(),
+      connection: {
+        host:
+          typeof this.target === 'string'
+            ? new URL(this.target).hostname
+            : this.target.host,
+        port:
+          typeof this.target === 'string'
+            ? Number(new URL(this.target).port || 6379)
+            : this.target.port,
+        tls: this.tls,
+        ready: this.ready,
+        lastError: this.lastError,
+      },
+    };
   }
 
   async get<T>(key: string): Promise<T | undefined> {
@@ -153,7 +241,7 @@ export class ValkeyCache extends CountingCache {
     } catch (error) {
       this.counters.errors++;
       this.counters.misses++;
-      this.logger?.warn({ err: error }, 'Cache read failed');
+      this.lastError = (error as Error).message;
       return undefined;
     }
   }
@@ -168,7 +256,7 @@ export class ValkeyCache extends CountingCache {
       this.counters.writes++;
     } catch (error) {
       this.counters.errors++;
-      this.logger?.warn({ err: error }, 'Cache write failed');
+      this.lastError = (error as Error).message;
     }
   }
 
@@ -187,29 +275,31 @@ export function createCache(
   if (!config.REDIS_URL && !config.REDIS_HOST) {
     return new MemoryCache(config.CACHE_MAX_ENTRIES);
   }
-  const common = {
-    // Fail fast instead of queueing: a slow cache must not slow down search.
-    enableOfflineQueue: false,
-    maxRetriesPerRequest: 1,
-    connectTimeout: 2000,
-    commandTimeout: 500,
-  };
   if (config.REDIS_URL) {
-    return new ValkeyCache(new Redis(config.REDIS_URL, common), logger);
+    return new ValkeyCache(config.REDIS_URL, logger);
   }
   const host = config.REDIS_HOST!;
   const local = host === 'localhost' || host === '127.0.0.1';
-  const tls =
-    config.REDIS_TLS === 'true' || (config.REDIS_TLS === 'auto' && !local);
+  // REDIS_SCHEME (as Laravel uses it: tcp or tls) wins over REDIS_TLS.
+  const scheme = (config.REDIS_SCHEME ?? '').toLowerCase();
+  const tls: boolean | 'auto' =
+    scheme === 'tls' || scheme === 'rediss'
+      ? true
+      : scheme === 'tcp' || scheme === 'redis'
+        ? false
+        : config.REDIS_TLS === 'true'
+          ? true
+          : config.REDIS_TLS === 'false' || local
+            ? false
+            : 'auto';
   return new ValkeyCache(
-    new Redis({
-      ...common,
+    {
       host,
       port: config.REDIS_PORT,
-      username: config.REDIS_USERNAME || undefined,
-      password: config.REDIS_PASSWORD || undefined,
-      tls: tls ? { servername: host } : undefined,
-    }),
+      username: config.REDIS_USERNAME,
+      password: config.REDIS_PASSWORD,
+      tls,
+    },
     logger,
   );
 }
