@@ -27,7 +27,7 @@ opleveringen uit het bestek aan de twee repositories en houdt de stand bij.
 | 6   | Testplan, testscenario's per bron, gekende beperkingen                               | `docs/vlaams-termennetwerk/testplan.md`, `catalog-vlaams/tests/<bron>.json` (CLI + CI), `docs/vlaams-termennetwerk/gekende-beperkingen.md` | 🔶 testplan, 45 scenario's (CLI + simulator), gekende beperkingen     |
 | 7   | Deploymentdocumentatie voor overdracht naar meemoo-infra                             | `docs/vlaams-termennetwerk/deployment.md` (Docker-images, env-vars, Postgres, probes, Kubernetes-voorbeeld)                                | ⏳                                                                    |
 
-Resultaatcache per bron (Valkey op Laravel Cloud, standaard uit in de code): zie [cache.md](cache.md); afwijking van F2.12 af te stemmen met meemoo.
+Resultaatcache: gebouwd maar uitgeschakeld (Valkey verwijderd op 26-10-2026, realtime volgens F2.12); zie [cache.md](cache.md).
 
 ## Catalogusuitbreidingen (vocabulaire `vtn:`)
 

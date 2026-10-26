@@ -587,17 +587,17 @@
     {
       "id": "API-23",
       "area": "performantie",
-      "title": "Herhaalde vraag komt uit de resultaatcache",
-      "requirement": ["F2.7"],
+      "title": "Herhaalde vraag wordt live beantwoord (geen cache, F2.12)",
+      "requirement": ["F2.7", "F2.12"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://stad.gent/id/conceptscheme/concept\", \"https://data.rkd.nl/rkdartists\"], query: \"belfort\", limit: 3) { cached responseTimeMs } }",
       "checks": [
         {
           "path": "data.terms[*].cached",
-          "oneOf": [true]
+          "oneOf": [false]
         },
         {
-          "maxMs": 1500
+          "maxMs": 5000
         }
       ],
       "repeat": 2

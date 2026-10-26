@@ -13,7 +13,7 @@ hoe testrondes verlopen en wanneer een oplevering aanvaard is.
 | Lokaal                      | `npm start` (poort 3123)                                 | `npm run dev` (poort 5173)                                      | ontwikkeling en CI                                          |
 
 De testomgeving draait de Vlaamse catalogus (`CATALOG_PATH=catalog-vlaams`), een
-eigen statusdienst met Postgres, een eigen resultaatcache (Valkey) en geen
+eigen statusdienst met Postgres, geen resultaatcache (elke vraag gaat live naar de bron) en geen
 enkele afhankelijkheid van de Nederlandse productieomgeving.
 
 ## 2. Testsoorten
@@ -36,7 +36,7 @@ enkele afhankelijkheid van de Nederlandse productieomgeving.
      testrapport in Markdown voor de testronde.
 3. **Performantie- en belastingstests**: de simulator (tempo rustig tot stress,
    gelijktijdigheid, duur) meet per bron p50, p95 en maximum responstijd,
-   slagingspercentage en cache-trefkans, en exporteert NDJSON/CSV.
+   slagingspercentage, en exporteert NDJSON/CSV.
 4. **Manuele tests van de zoekinterface** (§5): gebruiksscenario's die een
    mens moet beoordelen (leesbaarheid, flow, toegankelijkheid, thema's).
 5. **Toegankelijkheid**: toetsenbordbediening en contrast (WCAG 2.1 AA) per
@@ -87,7 +87,7 @@ de responstijd blijft onder een grens) en geen exacte resultaatlijsten.
 | API-20 | Bronstatus                    | Statusdienst publiceert observaties als LDES                          | F10.9                     |
 | API-21 | Bronstatus                    | Healthcheck van de API                                                | F10.7                     |
 | API-22 | Performantie                  | Zoekvraag over drie snelle bronnen binnen 5 s                         | F2.7                      |
-| API-23 | Performantie                  | Herhaalde vraag komt uit de resultaatcache                            | F2.7                      |
+| API-23 | Performantie                  | Herhaalde vraag wordt live beantwoord (geen cache, F2.12)             | F2.7, F2.12               |
 | API-24 | API-documentatie              | GraphiQL is bereikbaar                                                | F11.1, F11.5              |
 | API-25 | API-documentatie              | Schema beschrijft resultaatstypes, filters en foutcodes               | F11.1, F11.2, F4.12       |
 | API-26 | Integratie                    | CORS staat externe applicaties toe                                    | F8.1, F11.7               |

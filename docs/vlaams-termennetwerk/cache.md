@@ -1,5 +1,11 @@
 # Resultaatcache
 
+> **Status (26 oktober 2026): uitgeschakeld.** De Valkey-cache is van de
+> testomgeving verwijderd; de API beantwoordt elke vraag live, zoals F2.12
+> vraagt. De code blijft beschikbaar en staat standaard uit
+> (`CACHE_TTL_TERMS=0`, `CACHE_TTL_LOOKUP=0`). Wie hem later toch wil, volgt
+> de stappen hieronder.
+
 Het Vlaams Termennetwerk bevraagt bronnen live: een zoekvraag gaat parallel naar
 de SPARQL-endpoints van alle geselecteerde bronnen en het antwoord is zo snel
 als de traagste bron (begrensd door de timeout per bron). De API zelf doet
