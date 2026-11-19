@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from 'fs';
 import { config } from './config.js';
 import { extractMonitorConfigs } from './sync/monitor-sync.js';
 import { LdesSerializer, enrichObservations } from './ldes/serializer.js';
+import { UptimeReader, summarize, type UptimeSummary } from './uptime.js';
 
 const logger = pino({ level: 'info' });
 
@@ -93,6 +94,58 @@ try {
     return reply.type(contentType).send(stream);
   });
 
+  // Uptime per source for a status page: the share of successful checks per day and over the
+  // last 24 hours, 7 days and the whole period. The history is read from the same table the
+  // monitor writes; the answer is kept for a minute, a status page asks often.
+  const uptimeReader = new UptimeReader(config.DATABASE_URL);
+  const uptimeCache = new Map<number, { at: number; summary: UptimeSummary }>();
+  fastify.get('/uptime', async (request, reply) => {
+    const wanted = Number((request.query as { days?: string }).days ?? 90);
+    const days = Number.isFinite(wanted)
+      ? Math.min(90, Math.max(1, Math.round(wanted)))
+      : 90;
+    const cached = uptimeCache.get(days);
+    if (cached && Date.now() - cached.at < 60_000) {
+      return reply.send(cached.summary);
+    }
+    try {
+      const [dayRows, windowRows, latest] = await Promise.all([
+        uptimeReader.dayRows(days),
+        uptimeReader.windowRows(),
+        store.getLatest(),
+      ]);
+      const summary = summarize({
+        sources: monitors.map((monitor) => ({
+          uri: monitor.identifier,
+          name: catalog.getDatasetByIri(monitor.identifier)?.name ?? {},
+          endpoint: monitor.distribution.accessUrl.toString(),
+        })),
+        dayRows,
+        windowRows,
+        latest: new Map(
+          [...latest.values()].map((observation) => [
+            observation.monitor,
+            {
+              observedAt: observation.observedAt.toISOString(),
+              success: observation.success,
+              responseTimeMs: observation.responseTimeMs,
+            },
+          ]),
+        ),
+        days,
+        pollingIntervalSeconds: config.POLLING_INTERVAL_SECONDS,
+        now: new Date(),
+      });
+      uptimeCache.set(days, { at: Date.now(), summary });
+      return reply.send(summary);
+    } catch (error) {
+      logger.error({ error }, 'Uptime summary failed');
+      return reply
+        .status(503)
+        .send({ status: 'error', message: 'Uptime history unavailable' });
+    }
+  });
+
   // Health check for probes and central monitoring. Reading the latest observations also proves
   // the database connection works, which is what this service depends on.
   fastify.get('/health', async (request, reply) => {
@@ -120,6 +173,7 @@ try {
     logger.info('Shutting down...');
     monitorService.stop();
     await fastify.close();
+    await uptimeReader.close();
     await store.close();
     process.exit(0);
   };
