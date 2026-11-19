@@ -3,6 +3,7 @@ import {
   type Dataset,
   type Distribution,
   buildSearchQuery,
+  compactQuery,
   QueryMode,
 } from '@netwerk-digitaal-erfgoed/network-of-terms-query';
 import { Distribution as ProbeDistribution } from '@lde/dataset';
@@ -40,7 +41,9 @@ function buildMonitorQuery(
     limit: 1,
   });
 
-  let substituted = query;
+  // Without comments and indentation, as the API sends it: Getty refuses a request over 8 kB, and
+  // the AAT search is larger than that as written.
+  let substituted = compactQuery(query);
   for (const [varName, term] of Object.entries(bindings)) {
     const regex = new RegExp(`\\?${varName}\\b`, 'g');
     substituted = substituted.replace(regex, serializeTerm(term));
