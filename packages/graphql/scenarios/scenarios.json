@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generated": "2026-10-26",
-  "description": "Acceptatiescenario's voor het Vlaams Termennetwerk (bestek §3.7). Uitvoeren met `npm run test:scenarios` of in de simulator van de zoekinterface.",
+  "description": "Acceptatiescenario's voor het Vlaams Termennetwerk (bestek §3.7). Uitvoeren met `npm run test:scenarios` of op de testpagina van de zoekinterface.",
   "areas": [
     {
       "id": "federatief",
