@@ -2,6 +2,7 @@ import { testCatalog } from '../src/test-utils.js';
 import {
   buildSearchQuery,
   substituteBindings,
+  compactQuery,
   Dataset,
   Organization,
   parameterizeGenres,
@@ -492,4 +493,29 @@ describe('substituteBindings', () => {
       );
     },
   );
+});
+
+describe('compactQuery', () => {
+  it('drops comments, blank lines and indentation', () => {
+    expect(
+      compactQuery(
+        '# Find terms\nSELECT * WHERE {\n\n    ?s ?p ?o . # everything\n}\n#LIMIT#\n',
+      ),
+    ).toBe('SELECT * WHERE {\n?s ?p ?o .\n}');
+  });
+
+  it('keeps a # inside an IRI or a string', () => {
+    const query =
+      'PREFIX gvp: <http://vocab.getty.edu/ontology#>\nFILTER(?label = "a # b" && ?other = \'c#d\')';
+    expect(compactQuery(query)).toBe(query);
+  });
+
+  it('keeps an escaped quote from ending a string', () => {
+    const query = 'FILTER(?label = "say \\"hi\\" # not a comment")';
+    expect(compactQuery(query)).toBe(query);
+  });
+
+  it('still drops a comment after a less-than sign', () => {
+    expect(compactQuery('FILTER(?a < 5) # small ones')).toBe('FILTER(?a < 5)');
+  });
 });

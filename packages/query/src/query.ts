@@ -69,6 +69,50 @@ export interface BuildSearchQueryResult {
 }
 
 /**
+ * Take the comments and the indentation out of a query template, so the request stays small.
+ *
+ * Some endpoints refuse a large request: Getty answers 403 to a form body over roughly 8 kB, which
+ * the AAT search exceeded once its genres were filled in. A `#` starts a comment unless it sits in
+ * an IRI (`<…#…>`) or a string; when in doubt the text is kept. Runs on the template, before any
+ * binding is substituted, so no search term is ever read as query text here.
+ */
+export function compactQuery(query: string): string {
+  const lines: string[] = [];
+  for (const line of query.split('\n')) {
+    let end = line.length;
+    let quote: string | null = null;
+    let inIri = false;
+    for (let index = 0; index < line.length; index++) {
+      const char = line[index];
+      if (quote !== null) {
+        if (char === '\\') {
+          index++;
+        } else if (char === quote) {
+          quote = null;
+        }
+      } else if (inIri) {
+        // An IRI holds no whitespace: a `<` followed by a space was a less-than sign after all.
+        if (char === '>' || char === ' ') {
+          inIri = false;
+        }
+      } else if (char === '"' || char === "'") {
+        quote = char;
+      } else if (char === '<') {
+        inIri = true;
+      } else if (char === '#') {
+        end = index;
+        break;
+      }
+    }
+    const kept = line.slice(0, end).trim();
+    if (kept !== '') {
+      lines.push(kept);
+    }
+  }
+  return lines.join('\n');
+}
+
+/**
  * Substitute bindings into the query text, which is sent to the endpoint as-is.
  */
 export function substituteBindings(
@@ -265,7 +309,7 @@ export class QueryTermsService {
     const timer = new Hoek.Bench();
     // Extract HTTP credentials if the distribution URL contains any.
     const url = new URL(distribution.endpoint.toString());
-    const finalQuery = substituteBindings(query, bindings);
+    const finalQuery = substituteBindings(compactQuery(query), bindings);
     this.logger.info(`Querying "${url}" with "${finalQuery}"...`);
 
     // The timeout covers the response body too, and an error aborts the request, so no response
