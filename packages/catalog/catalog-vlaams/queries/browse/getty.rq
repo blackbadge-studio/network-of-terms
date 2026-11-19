@@ -5,6 +5,8 @@ PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
 # Browse template for the Getty vocabularies (AAT, TGN). ?parent is a concept, or the dataset for
 # the top level (the scheme is the dataset IRI with a trailing slash, e.g. http://vocab.getty.edu/aat/).
+# Getty has no skos:hasTopConcept: the top level is the scheme's facets (AAT: Objects Facet,
+# Materials Facet, …; TGN: World, Extraterrestrial Places, …).
 # Children follow gvp:broader, which includes non-preferred parents: Getty's polyhierarchy is kept,
 # and every node lists all its broader concepts.
 CONSTRUCT {
@@ -18,10 +20,11 @@ WHERE {
     {
         SELECT DISTINCT ?uri WHERE {
             {
-                BIND(IRI(CONCAT(STR(?parent), "/")) AS ?scheme)
-                ?scheme skos:hasTopConcept ?uri .
+                # Getty has fifteen facets in all; matching on the IRI is much faster here than
+                # joining on a scheme IRI that is computed from ?parent.
+                ?uri a gvp:Facet .
+                FILTER(STRSTARTS(STR(?uri), CONCAT(STR(?parent), "/")))
             }
-            UNION { ?parent skos:hasTopConcept ?uri }
             UNION { ?uri gvp:broader ?parent }
         }
         #LIMIT#
@@ -33,8 +36,11 @@ WHERE {
             ?broader_uri gvp:prefLabelGVP/skosxl:literalForm ?broader_prefLabel .
         }
         UNION {
-            # One child is enough to know the node can be expanded.
-            { SELECT ?uri (SAMPLE(?c) AS ?child) WHERE { ?c gvp:broader ?uri } GROUP BY ?uri }
+            # Whether the node can be expanded. Getty nodes can have thousands of children, so this
+            # does not fetch them: a node that has any gets itself as a marker in skos:narrower,
+            # which is all the tree reads (it asks for the children when the node is opened).
+            FILTER EXISTS { ?c gvp:broader ?uri }
+            BIND(?uri AS ?child)
         }
     }
 }
