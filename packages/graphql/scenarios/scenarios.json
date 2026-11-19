@@ -65,11 +65,13 @@
       "id": "API-01",
       "area": "federatief",
       "title": "Zoeken in één bron (RKDartists, \"Rubens\")",
+      "what": "We zoeken “Rubens” in één bron, de kunstenaarsdatabank RKDartists. Die ene bron moet antwoorden, met minstens één resultaat.",
       "requirement": ["F2.1", "F2.5"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://data.rkd.nl/rkdartists\"], query: \"Rubens\") { source { uri } result { __typename ... on Terms { terms { uri prefLabel resultType } } ... on Error { message } } } }",
       "checks": [
         {
+          "label": "Er komt precies één antwoord terug: dat van de gevraagde bron",
           "path": "data.terms",
           "length": {
             "min": 1,
@@ -77,14 +79,17 @@
           }
         },
         {
+          "label": "Het antwoord komt van RKDartists",
           "path": "data.terms[0].source.uri",
           "equals": "https://data.rkd.nl/rkdartists"
         },
         {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
           "path": "data.terms[0].result.__typename",
           "equals": "Terms"
         },
         {
+          "label": "Er is minstens één resultaat",
           "path": "data.terms[0].result.terms",
           "length": {
             "min": 1
@@ -99,23 +104,28 @@
       "id": "API-02",
       "area": "federatief",
       "title": "Elke term draagt bron, URI en label",
+      "what": "We zoeken “jurk” in de modethesaurus van het MoMu. Bij elk resultaat moet je zien uit welke bron het komt, met een vast webadres (URI) en een naam.",
       "requirement": ["F2.9", "F2.17", "F4.1"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://vtmk.data.momu.be/id/100001\"], query: \"jurk\", limit: 5) { source { uri name creators { name } } result { __typename ... on Terms { terms { uri prefLabel resultType } } ... on Error { message } } } }",
       "checks": [
         {
+          "label": "De bron heeft een naam",
           "path": "data.terms[0].source.name",
           "exists": true
         },
         {
+          "label": "De beheerder van de bron staat erbij",
           "path": "data.terms[0].source.creators[0].name",
           "exists": true
         },
         {
+          "label": "Elk resultaat heeft een webadres (URI) van de bron zelf",
           "path": "data.terms[0].result.terms[*].uri",
           "matches": "^https://vtmk\\.data\\.momu\\.be/id/"
         },
         {
+          "label": "De resultaten hebben een naam (voorkeurslabel)",
           "path": "data.terms[0].result.terms[*].prefLabel",
           "exists": true
         }
@@ -128,15 +138,18 @@
       "id": "API-03",
       "area": "federatief",
       "title": "Geen resultaten is een leeg antwoord, geen fout",
+      "what": "We zoeken een onzinwoord in de Gentse thesaurus. Niets vinden is geen fout: de bron moet gewoon een lege lijst teruggeven.",
       "requirement": ["F10.2", "F10.5"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://stad.gent/id/conceptscheme/concept\"], query: \"qzxvbnmlkj\") { result { __typename ... on Terms { terms { uri prefLabel resultType } } ... on Error { message } } } }",
       "checks": [
         {
+          "label": "De bron antwoordt zonder foutmelding",
           "path": "data.terms[0].result.__typename",
           "equals": "Terms"
         },
         {
+          "label": "De lijst met resultaten is leeg",
           "path": "data.terms[0].result.terms",
           "length": {
             "max": 0
@@ -151,11 +164,13 @@
       "id": "API-04",
       "area": "meerdere",
       "title": "Vier bronnen tegelijk: één resultaat per bron",
+      "what": "We zoeken “Gent” in vier bronnen tegelijk. Elke bron antwoordt apart, zodat je ziet welk resultaat van waar komt.",
       "requirement": ["F2.2", "F2.3", "F1.6"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-personen\", \"https://stad.gent/id/conceptscheme/concept\", \"https://data.rkd.nl/rkdartists\", \"https://vtmk.data.momu.be/id/100001\"], query: \"Gent\", limit: 5) { source { uri } result { __typename } } }",
       "checks": [
         {
+          "label": "Er komen precies vier antwoorden terug, één per bron",
           "path": "data.terms",
           "length": {
             "min": 4,
@@ -163,6 +178,7 @@
           }
         },
         {
+          "label": "Elk antwoord hoort bij een van de vier gevraagde bronnen",
           "path": "data.terms[*].source.uri",
           "oneOf": [
             "https://www.wikidata.org#vlaanderen-personen",
@@ -172,6 +188,7 @@
           ]
         },
         {
+          "label": "Elke bron geeft resultaten of een duidelijke melding (time-out of storing)",
           "path": "data.terms[*].result.__typename",
           "oneOf": ["Terms", "TimeoutError", "ServerError"]
         }
@@ -184,11 +201,13 @@
       "id": "API-05",
       "area": "meerdere",
       "title": "Alle negen bronnen: gedeeltelijke resultaten als een bron faalt",
+      "what": "We zoeken in alle negen bronnen tegelijk. Als één bron traag is of uitvalt, tonen de andere gewoon hun resultaten.",
       "requirement": ["F2.8", "F10.1"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"http://vocab.getty.edu/aat\", \"http://vocab.getty.edu/ulan\", \"http://vocab.getty.edu/tgn\", \"https://data.rkd.nl/rkdartists\", \"https://vtmk.data.momu.be/id/100001\", \"https://stad.gent/id/conceptscheme/concept\", \"https://www.wikidata.org#vlaanderen-personen\", \"https://www.wikidata.org#vlaanderen-plaatsen\", \"https://www.wikidata.org#alle-entiteiten\"], query: \"Brugge\", limit: 3) { source { uri } result { __typename } } }",
       "checks": [
         {
+          "label": "Er komen negen antwoorden terug, één per bron",
           "path": "data.terms",
           "length": {
             "min": 9,
@@ -196,12 +215,13 @@
           }
         },
         {
+          "label": "Minstens één bron levert resultaten",
           "path": "data.terms[*].result.__typename",
           "some": true,
-          "equals": "Terms",
-          "label": "minstens één bron levert termen"
+          "equals": "Terms"
         },
         {
+          "label": "Elke bron geeft resultaten of een duidelijke melding (time-out of storing)",
           "path": "data.terms[*].result.__typename",
           "oneOf": ["Terms", "TimeoutError", "ServerError"]
         }
@@ -214,17 +234,20 @@
       "id": "API-06",
       "area": "meerdere",
       "title": "Limiet per bron wordt gerespecteerd",
+      "what": "We vragen hoogstens twee resultaten per bron. Geen enkele bron mag er meer teruggeven.",
       "requirement": ["F2.6"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://stad.gent/id/conceptscheme/concept\", \"https://vtmk.data.momu.be/id/100001\"], query: \"kerk\", limit: 2) { result { ... on Terms { terms { uri } } } } }",
       "checks": [
         {
+          "label": "De eerste bron geeft hoogstens twee resultaten",
           "path": "data.terms[0].result.terms",
           "length": {
             "max": 2
           }
         },
         {
+          "label": "De tweede bron geeft hoogstens twee resultaten",
           "path": "data.terms[1].result.terms",
           "length": {
             "max": 2
@@ -239,23 +262,25 @@
       "id": "API-07",
       "area": "meerdere",
       "title": "Typefilter: enkel personen",
+      "what": "We zoeken “Rubens” en vragen alleen personen. Bronnen zonder personen worden niet bevraagd.",
       "requirement": ["F2.4", "F2.10"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-personen\", \"https://data.rkd.nl/rkdartists\", \"https://vtmk.data.momu.be/id/100001\"], query: \"Rubens\", types: [PERSON]) { source { uri } result { __typename ... on Terms { terms { uri prefLabel resultType } } ... on Error { message } } } }",
       "checks": [
         {
+          "label": "Elk resultaat is een persoon",
           "path": "data.terms[*].result.terms[*].resultType",
           "oneOf": ["PERSON"]
         },
         {
+          "label": "Er is minstens één persoon gevonden",
           "count": "data.terms[*].result.terms[*]",
-          "min": 1,
-          "label": "minstens één persoon"
+          "min": 1
         },
         {
+          "label": "De modethesaurus (alleen begrippen) wordt overgeslagen",
           "path": "data.terms[*].source.uri",
-          "notContains": "vtmk",
-          "label": "VTMK (enkel concepten) wordt overgeslagen"
+          "notContains": "vtmk"
         }
       ],
       "headers": {
@@ -266,16 +291,19 @@
       "id": "API-08",
       "area": "timeouts",
       "title": "Time-out van de request levert TimeoutError, andere bronnen gaan door",
+      "what": "We geven de bronnen met opzet maar één milliseconde om te antwoorden. Dat lukt niet, en dat moet het netwerk duidelijk melden in plaats van te blijven hangen.",
       "requirement": ["F2.8", "F10.5"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-personen\", \"https://data.rkd.nl/rkdartists\"], query: \"Rubens\", timeoutMs: 1) { result { __typename ... on Error { message } } } }",
       "checks": [
         {
+          "label": "Minstens één bron meldt een time-out",
           "path": "data.terms[*].result.__typename",
           "some": true,
           "equals": "TimeoutError"
         },
         {
+          "label": "Beide bronnen krijgen toch een eigen antwoord",
           "path": "data.terms",
           "length": {
             "min": 2,
@@ -291,11 +319,13 @@
       "id": "API-09",
       "area": "timeouts",
       "title": "Elke bron heeft een eigen timeout in de catalogus",
+      "what": "Elke bron krijgt een eigen maximale wachttijd. We controleren dat die voor elke bron is ingesteld.",
       "requirement": ["F3.7", "F10.8"],
       "kind": "graphql",
       "query": "{ sources { uri timeoutMs } }",
       "checks": [
         {
+          "label": "Elke bron heeft een wachttijd tussen 1 en 60 seconden",
           "path": "data.sources[*].timeoutMs",
           "min": 1000,
           "max": 60000
@@ -306,6 +336,7 @@
       "id": "API-10",
       "area": "timeouts",
       "title": "Een onbekende bron geeft een duidelijke fout",
+      "what": "We vragen een bron die niet bestaat. Het netwerk moet dat duidelijk zeggen.",
       "requirement": ["F10.4"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://example.org/geen-bron\"], query: \"x\") { result { __typename } } }",
@@ -316,19 +347,23 @@
       "id": "API-11",
       "area": "lookup",
       "title": "Lookup van een bekende Wikidata-URI (Rubens)",
+      "what": "We vragen een term op via zijn webadres (URI): Rubens in Wikidata. Het netwerk moet zelf weten bij welke bron dat adres hoort.",
       "requirement": ["F2.14", "F4.3", "F4.13"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"http://www.wikidata.org/entity/Q5599\"]) { uri source { __typename ... on Source { uri } } result { __typename ... on Term { uri prefLabel } } } }",
       "checks": [
         {
+          "label": "De term is gevonden",
           "path": "data.lookup[0].result.__typename",
           "equals": "Term"
         },
         {
+          "label": "De naam bevat “Rubens”",
           "path": "data.lookup[0].result.prefLabel",
           "contains": "Rubens"
         },
         {
+          "label": "Het netwerk herkent Wikidata als bron",
           "path": "data.lookup[0].source.uri",
           "equals": "https://www.wikidata.org#alle-entiteiten"
         }
@@ -341,11 +376,13 @@
       "id": "API-12",
       "area": "lookup",
       "title": "Lookup van een VTMK- en een Gentse URI in één vraag",
+      "what": "We vragen in één keer twee termen op uit twee verschillende bronnen.",
       "requirement": ["F2.14", "F4.4"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"https://vtmk.data.momu.be/id/106052\", \"https://stad.gent/id/concept/550009063\"]) { uri result { __typename ... on Term { prefLabel } } } }",
       "checks": [
         {
+          "label": "Er komen twee antwoorden terug",
           "path": "data.lookup",
           "length": {
             "min": 2,
@@ -353,6 +390,7 @@
           }
         },
         {
+          "label": "Beide termen zijn gevonden",
           "path": "data.lookup[*].result.__typename",
           "oneOf": ["Term"]
         }
@@ -365,11 +403,13 @@
       "id": "API-13",
       "area": "lookup",
       "title": "Onbestaande URI in een bekende bron geeft NotFoundError",
+      "what": "We vragen een webadres op dat niet bestaat, in een bron die we wel kennen. Het netwerk moet melden dat de term niet gevonden is.",
       "requirement": ["F4.5"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"https://vtmk.data.momu.be/id/999999999\"]) { result { __typename } } }",
       "checks": [
         {
+          "label": "Het antwoord is “niet gevonden”",
           "path": "data.lookup[0].result.__typename",
           "equals": "NotFoundError"
         }
@@ -382,11 +422,13 @@
       "id": "API-14",
       "area": "lookup",
       "title": "URI van geen enkele bron geeft SourceNotFoundError",
+      "what": "We vragen een webadres op dat bij geen enkele bron hoort. Het netwerk moet melden dat het de bron niet kent.",
       "requirement": ["F4.5"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"https://example.org/term/1\"]) { source { __typename } } }",
       "checks": [
         {
+          "label": "Het antwoord is “bron onbekend”",
           "path": "data.lookup[0].source.__typename",
           "equals": "SourceNotFoundError"
         }
@@ -396,33 +438,38 @@
       "id": "API-15",
       "area": "detail",
       "title": "Termdetail: labels, beschrijving en mappings (Rubens)",
+      "what": "We vragen de details van Rubens op: andere namen, een beschrijving, koppelingen naar andere databanken en het type.",
       "requirement": ["F4.1", "F4.14", "F6.3"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"http://www.wikidata.org/entity/Q5599\"]) { result { ... on Term { prefLabel altLabel scopeNote exactMatch { uri } resultType additionalType } } } }",
       "checks": [
         {
+          "label": "Er zijn alternatieve namen",
           "path": "data.lookup[0].result.altLabel",
           "length": {
             "min": 1
           }
         },
         {
+          "label": "Er is een beschrijving",
           "path": "data.lookup[0].result.scopeNote",
           "length": {
             "min": 1
           }
         },
         {
+          "label": "Er is een koppeling naar VIAF, de internationale namenlijst van bibliotheken",
           "path": "data.lookup[0].result.exactMatch[*].uri",
           "some": true,
-          "contains": "viaf.org",
-          "label": "VIAF-koppeling aanwezig"
+          "contains": "viaf.org"
         },
         {
+          "label": "Het type is “persoon”",
           "path": "data.lookup[0].result.resultType",
           "equals": "PERSON"
         },
         {
+          "label": "Het oorspronkelijke type van de bron blijft erbij (Person)",
           "path": "data.lookup[0].result.additionalType",
           "contains": "Person"
         }
@@ -435,16 +482,19 @@
       "id": "API-16",
       "area": "detail",
       "title": "Meertalige labels met taaltag",
+      "what": "We vragen een term op in het Nederlands en het Engels. Bij elke naam staat in welke taal hij is.",
       "requirement": ["F2.19", "§3.1 meertaligheid"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"https://vtmk.data.momu.be/id/106052\"], languages: [nl, en]) { result { ... on TranslatedTerm { prefLabel { language value } } } } }",
       "checks": [
         {
+          "label": "Er is een Nederlandse naam",
           "path": "data.lookup[0].result.prefLabel[*].language",
           "some": true,
           "equals": "nl"
         },
         {
+          "label": "Er is een Engelse naam",
           "path": "data.lookup[0].result.prefLabel[*].language",
           "some": true,
           "equals": "en"
@@ -458,17 +508,20 @@
       "id": "API-17",
       "area": "hierarchie",
       "title": "Bredere en nauwere termen in VTMK",
+      "what": "We vragen een term uit de modethesaurus op, samen met de ruimere en de specifiekere termen.",
       "requirement": ["F2.11", "F2.23"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"https://vtmk.data.momu.be/id/106052\"]) { result { ... on Term { broader { uri prefLabel } narrower { uri } } } } }",
       "checks": [
         {
+          "label": "Er is minstens één bredere term",
           "path": "data.lookup[0].result.broader",
           "length": {
             "min": 1
           }
         },
         {
+          "label": "Er is minstens één nauwere term",
           "path": "data.lookup[0].result.narrower",
           "length": {
             "min": 1
@@ -483,11 +536,13 @@
       "id": "API-18",
       "area": "hierarchie",
       "title": "Bredere term in de Gentse thesaurus",
+      "what": "We vragen een term uit de Gentse thesaurus op en kijken of de bredere term erbij staat.",
       "requirement": ["F2.11"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"https://stad.gent/id/concept/550009063\"]) { result { ... on Term { prefLabel broader { uri prefLabel } } } } }",
       "checks": [
         {
+          "label": "De bredere term komt uit de Gentse thesaurus",
           "path": "data.lookup[0].result.broader[*].uri",
           "matches": "^https://stad\\.gent/id/concept/"
         }
@@ -500,27 +555,31 @@
       "id": "API-40",
       "area": "hierarchie",
       "title": "Bladeren: topconcepten van VTMK",
+      "what": "We openen de boom van de modethesaurus. Het bovenste niveau moet verschijnen, met takken die je kunt openklappen.",
       "requirement": ["F5.1"],
       "kind": "graphql",
       "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\", languages: [nl]) { uri result { __typename ... on BrowseNodes { nodes { uri prefLabel hasNarrower } } } } }",
       "checks": [
         {
+          "label": "De bron geeft een niveau van de boom terug",
           "path": "data.browse.result.__typename",
           "equals": "BrowseNodes"
         },
         {
+          "label": "Het bovenste niveau telt minstens vijf termen",
           "path": "data.browse.result.nodes",
           "length": {
             "min": 5
           }
         },
         {
+          "label": "Minstens één term is uitklapbaar",
           "path": "data.browse.result.nodes[*].hasNarrower",
           "some": true,
-          "equals": true,
-          "label": "minstens één knoop is uitklapbaar"
+          "equals": true
         },
         {
+          "label": "“kleding” staat op het bovenste niveau",
           "path": "data.browse.result.nodes[*].prefLabel",
           "some": true,
           "contains": "kleding"
@@ -531,16 +590,19 @@
       "id": "API-41",
       "area": "hierarchie",
       "title": "Bladeren: nauwere termen van \"kleding\" met hun bredere term",
+      "what": "We klappen “kleding” open. De termen eronder verschijnen, en ze kennen hun bredere term.",
       "requirement": ["F5.1", "F2.23"],
       "kind": "graphql",
       "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\", uri: \"https://vtmk.data.momu.be/id/105730\", languages: [nl]) { result { ... on BrowseNodes { nodes { prefLabel broader { uri } } } } } }",
       "checks": [
         {
+          "label": "“ondergoed” staat onder “kleding”",
           "path": "data.browse.result.nodes[*].prefLabel",
           "some": true,
           "contains": "ondergoed"
         },
         {
+          "label": "De termen verwijzen terug naar “kleding” als bredere term",
           "path": "data.browse.result.nodes[*].broader[*].uri",
           "some": true,
           "equals": "https://vtmk.data.momu.be/id/105730"
@@ -551,11 +613,13 @@
       "id": "API-42",
       "area": "hierarchie",
       "title": "Alleen conceptbronnen bieden bladeren aan",
+      "what": "Bladeren kan alleen in bronnen met een boomstructuur. De catalogus geeft aan welke bronnen dat zijn.",
       "requirement": ["F5.1", "F3.9"],
       "kind": "graphql",
       "query": "{ sources { uri features { type } } }",
       "checks": [
         {
+          "label": "Minstens één bron biedt bladeren aan",
           "path": "data.sources[*].features[*].type",
           "some": true,
           "equals": "HIERARCHY"
@@ -566,6 +630,7 @@
       "id": "API-43",
       "area": "hierarchie",
       "title": "Bladeren in een personenbron geeft een duidelijke fout",
+      "what": "We proberen te bladeren in een personenbron, die geen boom heeft. Het netwerk moet dat duidelijk zeggen.",
       "requirement": ["F5.1"],
       "kind": "graphql",
       "query": "{ browse(source: \"https://data.rkd.nl/rkdartists\") { uri } }",
@@ -576,15 +641,18 @@
       "id": "API-19",
       "area": "status",
       "title": "Elke bron heeft een actuele status uit de eigen monitor",
+      "what": "Een eigen monitor test elke bron geregeld. We controleren dat elke bron een status met een datum heeft.",
       "requirement": ["F10.3", "F10.11", "F3.2"],
       "kind": "graphql",
       "query": "{ sources { uri status { isAvailable lastChecked } } }",
       "checks": [
         {
+          "label": "Elke status heeft een datum van de laatste controle",
           "path": "data.sources[*].status.lastChecked",
           "matches": "^20\\d\\d-"
         },
         {
+          "label": "Minstens negen bronnen hebben een status",
           "count": "data.sources[*].status",
           "min": 9
         }
@@ -594,21 +662,24 @@
       "id": "API-20",
       "area": "status",
       "title": "Statusdienst publiceert observaties als LDES",
+      "what": "De monitor publiceert zijn metingen als open data, zodat ook anderen ze kunnen gebruiken.",
       "requirement": ["F10.9"],
       "kind": "http",
       "path": "/status/observations/latest",
       "checks": [
         {
+          "label": "De metingen zijn bereikbaar",
           "status": 200
         },
         {
+          "label": "Het antwoord is linked data (Turtle)",
           "header": "content-type",
           "contains": "turtle"
         },
         {
+          "label": "Het bevat metingen in het standaardformaat SOSA",
           "path": "",
-          "contains": "sosa",
-          "label": "bevat SOSA-observaties"
+          "contains": "sosa"
         }
       ],
       "headers": {
@@ -619,22 +690,27 @@
       "id": "API-21",
       "area": "status",
       "title": "Healthcheck van de API",
+      "what": "De API heeft een controlepagina waarop je meteen ziet of alles draait.",
       "requirement": ["F10.7"],
       "kind": "http",
       "path": "/health",
       "checks": [
         {
+          "label": "De controlepagina is bereikbaar",
           "status": 200
         },
         {
+          "label": "De API meldt dat alles in orde is",
           "path": "status",
           "equals": "ok"
         },
         {
+          "label": "De catalogus telt minstens negen bronnen",
           "path": "catalog.sources",
           "min": 9
         },
         {
+          "label": "De statusdienst is bereikbaar",
           "path": "statusService.reachable",
           "equals": true
         }
@@ -644,14 +720,17 @@
       "id": "API-22",
       "area": "performantie",
       "title": "Zoekvraag over drie snelle bronnen binnen 5 s",
+      "what": "We zoeken in drie bronnen tegelijk en meten hoe lang het duurt.",
       "requirement": ["F2.7"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-personen\", \"https://stad.gent/id/conceptscheme/concept\", \"https://data.rkd.nl/rkdartists\"], query: \"Ensor\", limit: 5) { responseTimeMs result { __typename } } }",
       "checks": [
         {
+          "label": "Het volledige antwoord komt binnen 5 seconden",
           "maxMs": 5000
         },
         {
+          "label": "Elke bron antwoordt binnen 5 seconden",
           "path": "data.terms[*].responseTimeMs",
           "max": 5000
         }
@@ -664,15 +743,18 @@
       "id": "API-23",
       "area": "performantie",
       "title": "Herhaalde vraag wordt live beantwoord (geen cache, F2.12)",
+      "what": "We stellen dezelfde vraag twee keer na elkaar. Ook de tweede keer worden de bronnen opnieuw bevraagd: het antwoord komt niet uit een tussenopslag.",
       "requirement": ["F2.7", "F2.12"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://stad.gent/id/conceptscheme/concept\", \"https://data.rkd.nl/rkdartists\"], query: \"belfort\", limit: 3) { cached responseTimeMs } }",
       "checks": [
         {
+          "label": "Geen enkel antwoord komt uit de cache",
           "path": "data.terms[*].cached",
           "oneOf": [false]
         },
         {
+          "label": "Het antwoord komt binnen 5 seconden",
           "maxMs": 5000
         }
       ],
@@ -682,11 +764,13 @@
       "id": "API-24",
       "area": "docs",
       "title": "GraphiQL is bereikbaar",
+      "what": "Ontwikkelaars kunnen de API uitproberen in de GraphQL Playground. We controleren dat die bereikbaar is.",
       "requirement": ["F11.1", "F11.5"],
       "kind": "http",
       "path": "/graphiql",
       "checks": [
         {
+          "label": "De Playground is bereikbaar",
           "status": 200
         }
       ]
@@ -695,26 +779,31 @@
       "id": "API-25",
       "area": "docs",
       "title": "Schema beschrijft resultaatstypes, filters en foutcodes",
+      "what": "De API beschrijft zichzelf. We controleren dat de types, de filters en de foutmeldingen in die beschrijving staan.",
       "requirement": ["F11.1", "F11.2", "F4.12"],
       "kind": "graphql",
       "query": "{ __schema { types { name } } __type(name: \"Query\") { fields { name args { name } } } }",
       "checks": [
         {
+          "label": "Het resultaatstype staat in de beschrijving",
           "path": "data.__schema.types[*].name",
           "some": true,
           "equals": "ResultType"
         },
         {
+          "label": "De time-outmelding staat in de beschrijving",
           "path": "data.__schema.types[*].name",
           "some": true,
           "equals": "TimeoutError"
         },
         {
+          "label": "De melding “niet gevonden” staat in de beschrijving",
           "path": "data.__schema.types[*].name",
           "some": true,
           "equals": "NotFoundError"
         },
         {
+          "label": "Zoeken kan filteren op type",
           "path": "data.__type.fields[*].args[*].name",
           "some": true,
           "equals": "types"
@@ -725,15 +814,18 @@
       "id": "API-26",
       "area": "integratie",
       "title": "CORS staat externe applicaties toe",
+      "what": "Andere websites en applicaties mogen de API rechtstreeks aanroepen. Deze test draait alleen vanaf de commandline: een browser stuurt dit verzoek zelf en toont het antwoord niet.",
       "requirement": ["F8.1", "F11.7"],
       "kind": "http",
       "cli": true,
       "path": "/graphql",
       "checks": [
         {
+          "label": "De API beantwoordt de voorafgaande controle van de browser",
           "status": 204
         },
         {
+          "label": "Elke website mag de API aanroepen",
           "header": "access-control-allow-origin",
           "contains": "*"
         }
@@ -748,14 +840,17 @@
       "id": "API-27",
       "area": "integratie",
       "title": "Inbedbare zoekwidget wordt geserveerd",
+      "what": "De zoekwidget die organisaties in hun eigen website zetten, is als één bestand op te halen.",
       "requirement": ["F7.2", "F8.1"],
       "kind": "http",
       "path": "/widget/vtn-widget.js",
       "checks": [
         {
+          "label": "Het widgetbestand is bereikbaar",
           "status": 200
         },
         {
+          "label": "Het bevat het zoekelement (vtn-search)",
           "path": "",
           "contains": "vtn-search"
         }
@@ -766,23 +861,28 @@
       "id": "API-28",
       "area": "integratie",
       "title": "Aanbevolen opslaggegevens in één vraag (URI, label, bron, type)",
+      "what": "Een applicatie die een term bewaart, heeft vier dingen nodig: webadres, naam, bron en type. We halen ze in één vraag op voor Ieper.",
       "requirement": ["F4.6", "F8.2", "F11.3"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"http://www.wikidata.org/entity/Q102728\"]) { uri source { ... on Source { uri name } } result { ... on Term { uri prefLabel resultType } } } }",
       "checks": [
         {
+          "label": "Het webadres (URI) is dat van Ieper in Wikidata",
           "path": "data.lookup[0].result.uri",
           "equals": "http://www.wikidata.org/entity/Q102728"
         },
         {
+          "label": "De bron staat erbij",
           "path": "data.lookup[0].source.uri",
           "exists": true
         },
         {
+          "label": "De naam bevat “Ieper”",
           "path": "data.lookup[0].result.prefLabel",
           "contains": "Ieper"
         },
         {
+          "label": "Het type staat erbij",
           "path": "data.lookup[0].result.resultType",
           "exists": true
         }
@@ -792,57 +892,58 @@
       "id": "API-29",
       "area": "vlaams",
       "title": "Catalogus bevat de Vlaamse en internationale bestekbronnen",
+      "what": "De catalogus bevat de bronnen waarmee het bestek wil starten.",
       "requirement": ["§3.4.7", "F3.1"],
       "kind": "graphql",
       "query": "{ sources { uri } }",
       "checks": [
         {
+          "label": "Getty AAT (kunst en architectuur) staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "http://vocab.getty.edu/aat",
-          "label": "bron http://vocab.getty.edu/aat"
+          "equals": "http://vocab.getty.edu/aat"
         },
         {
+          "label": "Getty ULAN (kunstenaarsnamen) staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "http://vocab.getty.edu/ulan",
-          "label": "bron http://vocab.getty.edu/ulan"
+          "equals": "http://vocab.getty.edu/ulan"
         },
         {
+          "label": "Getty TGN (plaatsnamen) staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "http://vocab.getty.edu/tgn",
-          "label": "bron http://vocab.getty.edu/tgn"
+          "equals": "http://vocab.getty.edu/tgn"
         },
         {
+          "label": "RKDartists (kunstenaars) staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "https://data.rkd.nl/rkdartists",
-          "label": "bron https://data.rkd.nl/rkdartists"
+          "equals": "https://data.rkd.nl/rkdartists"
         },
         {
+          "label": "De modethesaurus van het MoMu staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "https://vtmk.data.momu.be/id/100001",
-          "label": "bron https://vtmk.data.momu.be/id/100001"
+          "equals": "https://vtmk.data.momu.be/id/100001"
         },
         {
+          "label": "De Gentse thesaurus staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "https://stad.gent/id/conceptscheme/concept",
-          "label": "bron https://stad.gent/id/conceptscheme/concept"
+          "equals": "https://stad.gent/id/conceptscheme/concept"
         },
         {
+          "label": "Wikidata, personen staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "https://www.wikidata.org#vlaanderen-personen",
-          "label": "bron https://www.wikidata.org#vlaanderen-personen"
+          "equals": "https://www.wikidata.org#vlaanderen-personen"
         },
         {
+          "label": "Wikidata, plaatsen staat in de catalogus",
           "path": "data.sources[*].uri",
           "some": true,
-          "equals": "https://www.wikidata.org#vlaanderen-plaatsen",
-          "label": "bron https://www.wikidata.org#vlaanderen-plaatsen"
+          "equals": "https://www.wikidata.org#vlaanderen-plaatsen"
         }
       ]
     },
@@ -850,39 +951,40 @@
       "id": "API-30",
       "area": "vlaams",
       "title": "Catalogus bevat geen Nederland-specifieke bronnen",
+      "what": "De Vlaamse catalogus is geen kopie van de Nederlandse: bronnen die alleen voor Nederland dienen, zitten er niet in.",
       "requirement": ["§3.3", "§3.7"],
       "kind": "graphql",
       "query": "{ sources { uri } }",
       "checks": [
         {
+          "label": "Geen bronnen van de Rijksdienst voor het Cultureel Erfgoed",
           "path": "data.sources[*].uri",
-          "notContains": "cultureelerfgoed.nl",
-          "label": "geen cultureelerfgoed.nl"
+          "notContains": "cultureelerfgoed.nl"
         },
         {
+          "label": "Geen Adamlink (Amsterdam)",
           "path": "data.sources[*].uri",
-          "notContains": "adamlink",
-          "label": "geen adamlink"
+          "notContains": "adamlink"
         },
         {
+          "label": "Geen bronnen van Beeld en Geluid",
           "path": "data.sources[*].uri",
-          "notContains": "beeldengeluid",
-          "label": "geen beeldengeluid"
+          "notContains": "beeldengeluid"
         },
         {
+          "label": "Geen bronnen van de Koninklijke Bibliotheek",
           "path": "data.sources[*].uri",
-          "notContains": "kb.nl",
-          "label": "geen kb.nl"
+          "notContains": "kb.nl"
         },
         {
+          "label": "Geen bronnen van het IISG",
           "path": "data.sources[*].uri",
-          "notContains": "iisg",
-          "label": "geen iisg"
+          "notContains": "iisg"
         },
         {
+          "label": "Geen WO2-thesaurus",
           "path": "data.sources[*].uri",
-          "notContains": "wo2",
-          "label": "geen wo2"
+          "notContains": "wo2"
         }
       ]
     },
@@ -890,11 +992,13 @@
       "id": "API-31",
       "area": "vlaams",
       "title": "Statusdienst is de eigen, niet die van NDE",
+      "what": "De monitor die de bronnen in het oog houdt, is die van het Vlaams Termennetwerk zelf, niet die van Nederland.",
       "requirement": ["§3.3", "§3.7"],
       "kind": "http",
       "path": "/health",
       "checks": [
         {
+          "label": "Het adres van de statusdienst verwijst niet naar het NDE",
           "path": "statusService.url",
           "notContains": "netwerkdigitaalerfgoed"
         }
@@ -904,15 +1008,18 @@
       "id": "API-32",
       "area": "vlaams",
       "title": "Vlaamse bronnen worden live via SPARQL bevraagd",
+      "what": "We zoeken “kant” in twee Vlaamse bronnen. Het antwoord komt rechtstreeks van de bron, niet uit een kopie.",
       "requirement": ["§3.4.6", "§3.7"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://stad.gent/id/conceptscheme/concept\", \"https://vtmk.data.momu.be/id/100001\"], query: \"kant\", limit: 3) { source { uri } cached result { ... on Terms { terms { uri } } } } }",
       "checks": [
         {
+          "label": "De antwoorden komen live van de bron, niet uit de cache",
           "path": "data.terms[*].cached",
           "oneOf": [false]
         },
         {
+          "label": "De resultaten hebben een webadres van de bron zelf",
           "path": "data.terms[0].result.terms[*].uri",
           "matches": "^https://(stad\\.gent|vtmk\\.data\\.momu\\.be)/"
         }
@@ -925,16 +1032,19 @@
       "id": "API-33",
       "area": "vlaanderen",
       "title": "Vlaamse plaatsnaam \"Ieper\" vindt de gemeente",
+      "what": "We zoeken de plaatsnaam “Ieper”. De gemeente moet gevonden worden, als plaats.",
       "requirement": ["F2.5", "§3.4.8"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-plaatsen\"], query: \"Ieper\") { result { __typename ... on Terms { terms { uri prefLabel resultType } } ... on Error { message } } } }",
       "checks": [
         {
+          "label": "Een van de resultaten heet “Ieper”",
           "path": "data.terms[0].result.terms[*].prefLabel",
           "some": true,
           "contains": "Ieper"
         },
         {
+          "label": "Elk resultaat is een plaats",
           "path": "data.terms[0].result.terms[*].resultType",
           "oneOf": ["PLACE"]
         }
@@ -947,11 +1057,13 @@
       "id": "API-34",
       "area": "vlaanderen",
       "title": "Nederlandstalige labels standaard",
+      "what": "Wie geen taal opgeeft, krijgt Nederlandstalige namen.",
       "requirement": ["§3.4.8"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"http://www.wikidata.org/entity/Q5599\"]) { result { ... on Term { prefLabel } } } }",
       "checks": [
         {
+          "label": "De naam is “Pieter Paul Rubens”",
           "path": "data.lookup[0].result.prefLabel",
           "contains": "Pieter Paul Rubens"
         }
@@ -961,11 +1073,13 @@
       "id": "API-35",
       "area": "vlaanderen",
       "title": "Engelstalige interface vraagt Engelse labels",
+      "what": "Wie Engels vraagt, krijgt Engelse namen.",
       "requirement": ["F2.19"],
       "kind": "graphql",
       "query": "{ lookup(uris: [\"https://vtmk.data.momu.be/id/106052\"], languages: [en]) { result { ... on TranslatedTerm { prefLabel { language value } } } } }",
       "checks": [
         {
+          "label": "Alle namen zijn in het Engels",
           "path": "data.lookup[0].result.prefLabel[*].language",
           "oneOf": ["en"]
         }
@@ -975,11 +1089,13 @@
       "id": "API-36",
       "area": "nl",
       "title": "Genrefilter blijft beschikbaar",
+      "what": "Het filter op genre uit de Nederlandse code blijft beschikbaar.",
       "requirement": ["§3.7"],
       "kind": "graphql",
       "query": "{ sources { uri features { type } } }",
       "checks": [
         {
+          "label": "Minstens één bron biedt het genrefilter aan",
           "path": "data.sources[*].features[*].type",
           "some": true,
           "equals": "GENRE_FILTER"
@@ -990,11 +1106,13 @@
       "id": "API-37",
       "area": "nl",
       "title": "Verouderd veld terms blijft werken (achterwaartse compatibiliteit)",
+      "what": "Applicaties die nog de oude manier van opvragen gebruiken, blijven werken.",
       "requirement": ["F9.1"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://stad.gent/id/conceptscheme/concept\"], query: \"belfort\", limit: 2) { terms { uri } } }",
       "checks": [
         {
+          "label": "De oude manier geeft nog resultaten",
           "path": "data.terms[0].terms",
           "length": {
             "min": 1
@@ -1006,11 +1124,13 @@
       "id": "API-38",
       "area": "nl",
       "title": "Zoekmodus RAW blijft werken",
+      "what": "De zoekmodus voor gevorderden, waarbij de zoekvraag ongewijzigd naar de bron gaat, blijft werken.",
       "requirement": ["F2.5"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://vtmk.data.momu.be/id/100001\"], query: \"jurk\", queryMode: RAW, limit: 3) { result { __typename } } }",
       "checks": [
         {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
           "path": "data.terms[0].result.__typename",
           "equals": "Terms"
         }
@@ -1023,11 +1143,13 @@
       "id": "API-39",
       "area": "nl",
       "title": "Personen- en plaatsdetails (NDE-uitbreiding) blijven werken",
+      "what": "De extra gegevens voor personen uit de Nederlandse code, zoals de geboortedatum, blijven werken.",
       "requirement": ["F4.14", "§3.7"],
       "kind": "graphql",
       "query": "{ terms(sources: [\"https://data.rkd.nl/rkdartists\"], query: \"Rubens\", limit: 5) { result { ... on Terms { terms { person { birthDate } } } } } }",
       "checks": [
         {
+          "label": "Minstens één persoon heeft een geboortedatum",
           "path": "data.terms[0].result.terms[*].person.birthDate",
           "some": true,
           "exists": true
@@ -1041,14 +1163,17 @@
       "id": "UI-01",
       "area": "ui",
       "title": "Startpagina met zoekvak (nl)",
+      "what": "De startpagina van de zoekinterface is bereikbaar in het Nederlands.",
       "requirement": ["F7.2"],
       "kind": "http",
       "path": "/nl",
       "checks": [
         {
+          "label": "De pagina is bereikbaar",
           "status": 200
         },
         {
+          "label": "Het is een pagina van het Vlaams Termennetwerk",
           "path": "",
           "contains": "Vlaams Termennetwerk"
         }
@@ -1059,14 +1184,17 @@
       "id": "UI-02",
       "area": "ui",
       "title": "Startpagina (en)",
+      "what": "De startpagina van de zoekinterface is bereikbaar in het Engels.",
       "requirement": ["F2.19"],
       "kind": "http",
       "path": "/en",
       "checks": [
         {
+          "label": "De pagina is bereikbaar",
           "status": 200
         },
         {
+          "label": "Het is een pagina van het Vlaams Termennetwerk",
           "path": "",
           "contains": "Vlaams Termennetwerk"
         }
@@ -1077,14 +1205,17 @@
       "id": "UI-03",
       "area": "ui",
       "title": "Bronnenpagina",
+      "what": "De pagina met het overzicht van de bronnen is bereikbaar.",
       "requirement": ["F3.12", "F10.11"],
       "kind": "http",
       "path": "/nl/sources",
       "checks": [
         {
+          "label": "De pagina is bereikbaar",
           "status": 200
         },
         {
+          "label": "Het is een pagina van het Vlaams Termennetwerk",
           "path": "",
           "contains": "Vlaams Termennetwerk"
         }
@@ -1095,14 +1226,17 @@
       "id": "UI-04",
       "area": "ui",
       "title": "Zoeken op URI",
+      "what": "De pagina om een term op te zoeken via zijn webadres (URI) is bereikbaar.",
       "requirement": ["F2.22"],
       "kind": "http",
       "path": "/nl/lookup",
       "checks": [
         {
+          "label": "De pagina is bereikbaar",
           "status": 200
         },
         {
+          "label": "Het is een pagina van het Vlaams Termennetwerk",
           "path": "",
           "contains": "Vlaams Termennetwerk"
         }
@@ -1113,14 +1247,17 @@
       "id": "UI-05",
       "area": "ui",
       "title": "Widgetdocumentatie",
+      "what": "De pagina van de zoekwidget is bereikbaar.",
       "requirement": ["F7.2"],
       "kind": "http",
       "path": "/nl/widget",
       "checks": [
         {
+          "label": "De pagina is bereikbaar",
           "status": 200
         },
         {
+          "label": "Het is een pagina van het Vlaams Termennetwerk",
           "path": "",
           "contains": "Vlaams Termennetwerk"
         }
@@ -1131,19 +1268,319 @@
       "id": "UI-06",
       "area": "ui",
       "title": "Veelgestelde vragen",
+      "what": "De pagina met veelgestelde vragen is bereikbaar.",
       "requirement": ["F11.11"],
       "kind": "http",
       "path": "/nl/faq",
       "checks": [
         {
+          "label": "De pagina is bereikbaar",
           "status": 200
         },
         {
+          "label": "Het is een pagina van het Vlaams Termennetwerk",
           "path": "",
           "contains": "Vlaams Termennetwerk"
         }
       ],
       "base": "ui"
     }
-  ]
+  ],
+  "requirements": {
+    "F1.6": {
+      "title": "Overlap & bronvermelding",
+      "text": "De oplossing moet toelaten dat de beheerder van het Vlaams Termennetwerk overlappende resultaten uit verschillende bronnen naast elkaar kan tonen met duidelijke bronvermelding.",
+      "story": "US-128"
+    },
+    "F2.1": {
+      "title": "Zoeken",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie een zoekvraag kan sturen naar één geselecteerde bron.",
+      "story": "US-001"
+    },
+    "F2.2": {
+      "title": "Zoeken",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie een zoekvraag kan sturen naar meerdere geselecteerde bronnen tegelijk.",
+      "story": "US-002"
+    },
+    "F2.3": {
+      "title": "Zoeken",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie de lijst van bronnen kan meegeven in de zoekrequest.",
+      "story": "US-003"
+    },
+    "F2.4": {
+      "title": "Zoeken",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie een resultaatstype of entiteitstype kan meegeven bij een zoekvraag, zoals concept, persoon, organisatie, plaats of gebeurtenis.",
+      "story": "US-004"
+    },
+    "F2.5": {
+      "title": "Zoeken",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie kan zoeken op een ingevoerde term of naam.",
+      "story": "US-007"
+    },
+    "F2.6": {
+      "title": "Zoeken",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie het maximum aantal resultaten per bron kan beperken.",
+      "story": "US-009"
+    },
+    "F2.7": {
+      "title": "Performance",
+      "text": "De oplossing moet ondersteunen dat de afnemende applicatie binnen een aanvaardbare tijd een response ontvangen.",
+      "story": "US-027"
+    },
+    "F2.8": {
+      "title": "Performance",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie gedeeltelijke resultaten kan ontvangen bij timeout.",
+      "story": "US-028"
+    },
+    "F2.9": {
+      "title": "Federatieve zoekdienst",
+      "text": "De oplossing moet ondersteunen dat de afnemende applicatie zoekresultaten uit verschillende bronnen in één eenduidig resultaatformaat ontvangen.",
+      "story": "US-030"
+    },
+    "F2.10": {
+      "title": "Zoekkwaliteit",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie zoekresultaten kan beperken tot specifieke entiteitstypes zoals persoon, plaats, concept of organisatie.",
+      "story": "US-031"
+    },
+    "F2.11": {
+      "title": "Verdiepend zoeken",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie relaties zoals broader, narrower, related en exactMatch kan ophalen wanneer beschikbaar.",
+      "story": "US-035"
+    },
+    "F2.12": {
+      "title": "Performance",
+      "text": "De documentatie moet duidelijk maken dat het Vlaams Termennetwerk bronnen in principe realtime bevraagt als federatief doorgeefluik.",
+      "story": "US-055"
+    },
+    "F2.14": {
+      "title": "Zoeken met URI",
+      "text": "De oplossing moet toelaten dat de API-integrator een URI van een term kan valideren en de actuele metadata kunnen ophalen.",
+      "story": "US-076"
+    },
+    "F2.17": {
+      "title": "Federatieve zoekdienst",
+      "text": "De oplossing moet toelaten dat de eindgebruiker bij een zoekresultaat kan zien uit welke bron het resultaat komt.",
+      "story": "US-181"
+    },
+    "F2.19": {
+      "title": "Zoekkwaliteit",
+      "text": "De oplossing moet toelaten dat de eindgebruiker resultaten kan filteren per bron, type en taal.",
+      "story": "US-198"
+    },
+    "F2.22": {
+      "title": "Zoeken met URI",
+      "text": "De oplossing moet toelaten dat de gebruiker van de algemene zoekinterface naast zoeken met woorden ook rechtstreeks kan zoeken op URI.",
+      "story": "US-226"
+    },
+    "F2.23": {
+      "title": "Verdiepend zoeken",
+      "text": "De oplossing moet toelaten dat de gebruiker van de algemene zoekinterface vanuit een zoekresultaat bredere, nauwere en gerelateerde termen kan bekijken en het hiërarchische pad van het resultaat kunnen zien wanneer de bron die relaties aanbiedt.",
+      "story": "US-229"
+    },
+    "F3.1": {
+      "title": "Broncatalogus",
+      "text": "De oplossing moet toelaten dat de API-integrator een machineleesbare catalogus van doorzoekbare terminologiebronnen kan ophalen.",
+      "story": "US-037"
+    },
+    "F3.2": {
+      "title": "Machineleesbare broncatalogus",
+      "text": "De oplossing moet toelaten dat de API-integrator de broncatalogus machineleesbaar kan ophalen, inclusief beschikbare bronnen, status, talen, resultaatstypes, technische beperkingen en bron-URI’s.",
+      "story": "US-065"
+    },
+    "F3.7": {
+      "title": "Broncatalogusbeheer",
+      "text": "De oplossing moet toelaten dat de beheerder van het Vlaams Termennetwerk per bron timeoutinstellingen kan configureren.",
+      "story": "US-095"
+    },
+    "F3.9": {
+      "title": "Bronprofiel",
+      "text": "De oplossing moet toelaten dat de beheerder van het Vlaams Termennetwerk per bron kan vastleggen welke zoekmogelijkheden ondersteund worden, zoals termzoeking, URI-lookup, resultaatstypefiltering of hiërarchische navigatie wanneer beschikbaar.",
+      "story": "US-119"
+    },
+    "F3.12": {
+      "title": "Bronnenlijst",
+      "text": "De oplossing moet toelaten dat de eindgebruiker een publieke lijst van beschikbare terminologiebronnen kan raadplegen.",
+      "story": "US-202"
+    },
+    "F4.1": {
+      "title": "Zoekresultaten",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie bij elk resultaat minstens label, URI, bron, resultaatstype en, afhankelijk van het type resultaat, beschrijving, scope note of identificerende metadata ontvangen.",
+      "story": "US-011"
+    },
+    "F4.3": {
+      "title": "Termdetails",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie termdetails kan ophalen op basis van een URI.",
+      "story": "US-014"
+    },
+    "F4.4": {
+      "title": "Termdetails",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie bij lookup dezelfde kernvelden ontvangen als bij zoeken.",
+      "story": "US-015"
+    },
+    "F4.5": {
+      "title": "Termdetails",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie bij lookup een duidelijke fout krijgen wanneer een URI niet gevonden wordt.",
+      "story": "US-016"
+    },
+    "F4.6": {
+      "title": "Selectie en koppeling",
+      "text": "De oplossing moet bij selectie van een term of authority de aanbevolen opslaggegevens kunnen teruggeven, zoals URI, label, bron, resultaatstype, taal en eventueel beschrijving of identificerende metadata.",
+      "story": "US-018"
+    },
+    "F4.12": {
+      "title": "Termmetadata",
+      "text": "De oplossing moet toelaten dat de API-integrator in de API-documentatie kan zien welke velden verplicht, optioneel of bronafhankelijk zijn.",
+      "story": "US-067"
+    },
+    "F4.13": {
+      "title": "Persistente koppelingen",
+      "text": "De oplossing moet toelaten dat de API-integrator op basis van een opgeslagen identifier de actuele metadata van een term kan opvragen.",
+      "story": "US-068"
+    },
+    "F4.14": {
+      "title": "Termmetadata",
+      "text": "De oplossing moet toelaten dat de eindgebruiker bij authority-resultaten zoals personen, plaatsen of organisaties aanvullende identificerende metadata kan bekijken wanneer beschikbaar.",
+      "story": "US-185"
+    },
+    "F5.1": {
+      "title": "Hiërarchisch zoeken",
+      "text": "De oplossing moet toelaten dat de gebruiker van de algemene zoekinterface binnen een geselecteerde bron door een boomstructuur of thesaurusstructuur kan zoeken wanneer de bron die aanbiedt.",
+      "story": "US-238"
+    },
+    "F6.3": {
+      "title": "Authorities",
+      "text": "De oplossing moet toelaten dat de API-integrator bij authority-resultaten identificerende metadata kan ontvangen wanneer beschikbaar, zoals naamvarianten, levensdata of externe identifiers.",
+      "story": "US-232"
+    },
+    "F7.2": {
+      "title": "Algemene zoekinterface",
+      "text": "De oplossing moet toelaten dat de gebruiker van de algemene zoekinterface een algemene zoekinterface kan gebruiken bovenop de API.",
+      "story": "US-218"
+    },
+    "F8.1": {
+      "title": "Applicatie-integratie",
+      "text": "De oplossing moet toelaten dat de eindgebruiker vanuit een registratieveld in een beheersysteem termen of authorities kan zoeken in relevante bronnen.",
+      "story": "US-204"
+    },
+    "F8.2": {
+      "title": "Applicatie-integratie",
+      "text": "De oplossing moet toelaten dat de eindgebruiker een geselecteerde term of authority kan registreren bij een objectbeschrijving, inclusief label, bron en identifier.",
+      "story": "US-205"
+    },
+    "F9.1": {
+      "title": "API-versiebeheer",
+      "text": "De oplossing moet toelaten dat de API-integrator API-versies en deprecatie-informatie kan raadplegen.",
+      "story": "US-064"
+    },
+    "F10.1": {
+      "title": "Foutafhandeling",
+      "text": "De oplossing moet ondersteunen dat de afnemende applicatie gedeeltelijke resultaten kan ontvangen wanneer één bron faalt.",
+      "story": "US-023"
+    },
+    "F10.2": {
+      "title": "Foutafhandeling",
+      "text": "De oplossing moet toelaten dat de afnemende applicatie per bron kan zien of de zoekactie succesvol was, geen resultaten gaf of faalde.",
+      "story": "US-024"
+    },
+    "F10.3": {
+      "title": "Bronstatus",
+      "text": "De oplossing moet toelaten dat de eindgebruiker per bron kan zien wanneer een bron niet bevraagd kon worden doordat ze offline was of niet tijdig antwoordde.",
+      "story": "US-033"
+    },
+    "F10.4": {
+      "title": "Foutafhandeling",
+      "text": "De oplossing moet ondersteunen dat de API-integrator consistente foutcodes kan ontvangen.",
+      "story": "US-047"
+    },
+    "F10.5": {
+      "title": "Foutafhandeling",
+      "text": "De oplossing moet toelaten dat de API-integrator een timeout kan onderscheiden van “geen resultaten”.",
+      "story": "US-048"
+    },
+    "F10.7": {
+      "title": "Healthcheck",
+      "text": "De oplossing moet toelaten dat de beheerder van het Vlaams Termennetwerk een algemene healthcheck kan uitvoeren.",
+      "story": "US-111"
+    },
+    "F10.8": {
+      "title": "Beschikbaarheid",
+      "text": "De oplossing moet toelaten dat de beheerder van het Vlaams Termennetwerk per bron technische beschikbaarheidscriteria kan vastleggen, zoals maximale responstijd, timeout, foutpercentage en gelijktijdige belasting.",
+      "story": "US-130"
+    },
+    "F10.9": {
+      "title": "Monitoring",
+      "text": "De oplossing moet toelaten dat de beheerder van het Vlaams Termennetwerk responstijden en foutpercentages per bron kan opvolgen.",
+      "story": "US-142"
+    },
+    "F10.11": {
+      "title": "Bronstatus",
+      "text": "De oplossing moet toelaten dat de gebruiker van de algemene zoekinterface op de bronnenoverzichtspagina kan zien of een bron beschikbaar is.",
+      "story": "US-234"
+    },
+    "F11.1": {
+      "title": "Documentatie",
+      "text": "De oplossing moet toelaten dat de API-integrator duidelijke API-documentatie kan raadplegen.",
+      "story": "US-050"
+    },
+    "F11.2": {
+      "title": "Documentatie",
+      "text": "De oplossing moet voorzien in een overzicht van foutcodes en foutscenario’s.",
+      "story": "US-051"
+    },
+    "F11.3": {
+      "title": "Documentatie",
+      "text": "De oplossing moet ondersteunen dat de API-integrator richtlijnen over welke gegevens bij selectie opgeslagen moeten worden, zoals URI, label, bron, resultaatstype en taal.",
+      "story": "US-052"
+    },
+    "F11.5": {
+      "title": "Documentatie",
+      "text": "De oplossing moet ondersteunen dat de API-integrator request- en responsevoorbeelden zien.",
+      "story": "US-060"
+    },
+    "F11.7": {
+      "title": "API-keuze",
+      "text": "De documentatie moet duidelijk maken of het Vlaams Termennetwerk GraphQL, REST of beide ondersteunt.",
+      "story": "US-070"
+    },
+    "F11.11": {
+      "title": "Documentatie",
+      "text": "De oplossing moet ondersteunen dat de beheerder van het Vlaams Termennetwerk documentatie structureren per doelgroep.",
+      "story": "US-087"
+    }
+  },
+  "bestek": {
+    "url": "https://prototype.blackbadge.studio/labs/termennetwerk-pitch/bestek",
+    "sections": {
+      "§3.1 meertaligheid": {
+        "title": "Scope: meertaligheid",
+        "page": 18,
+        "pdfPage": 24
+      },
+      "§3.3": {
+        "title": "Technische uitgangspunten",
+        "page": 20,
+        "pdfPage": 26
+      },
+      "§3.4.6": {
+        "title": "Bevraging via SPARQL en Linked Open Data",
+        "page": 24,
+        "pdfPage": 30
+      },
+      "§3.4.7": {
+        "title": "Eerste bronnen",
+        "page": 27,
+        "pdfPage": 33
+      },
+      "§3.4.8": {
+        "title": "Termdetail en resultaatweergave",
+        "page": 27,
+        "pdfPage": 33
+      },
+      "§3.7": {
+        "title": "Testen",
+        "page": 33,
+        "pdfPage": 39
+      }
+    }
+  }
 }

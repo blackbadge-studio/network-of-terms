@@ -5,7 +5,8 @@
  * simulator page in the browser, so both judge a scenario exactly the same way. Scenarios live in
  * scenarios.json next to this file; the API serves both under /tests/.
  *
- * A scenario is `{ id, area, title, requirement, kind: 'graphql' | 'http', checks: [...] }`:
+ * A scenario is `{ id, area, title, what, requirement, kind: 'graphql' | 'http', checks: [...] }`
+ * (`what` and each check's `label` say in plain Dutch what is tested, for readers who are not developers):
  * - graphql: `query`, optional `variables`, `headers`, `repeat` (runs the request that many times
  *   and checks the last answer, e.g. to see a cache hit).
  * - http: `path`, optional `base` ('api' default, or 'ui'), `method`, `headers`.
@@ -53,22 +54,28 @@ const includes = (value, needle) =>
       ? value.toLowerCase().includes(String(needle).toLowerCase())
       : value === needle;
 
+/**
+ * Judges one check. `label` says in plain words what is checked (the scenario gives it), `detail` is the
+ * exact expression for who wants to see the path and the operator.
+ */
 function evaluate(check, response) {
-  const label =
-    check.label ??
-    [
-      check.path ??
-        check.count ??
-        (check.maxMs !== undefined
-          ? 'responstijd'
-          : check.status !== undefined
-            ? 'HTTP-status'
-            : check.header),
-      Object.keys(check)
-        .filter((key) => !['label', 'path', 'some'].includes(key))
-        .map((key) => `${key} ${short(check[key])}`)
-        .join(', '),
-    ].join(': ');
+  const detail = [
+    check.path ??
+      check.count ??
+      (check.maxMs !== undefined
+        ? 'responstijd'
+        : check.status !== undefined
+          ? 'HTTP-status'
+          : check.header),
+    Object.keys(check)
+      .filter((key) => !['label', 'path', 'some'].includes(key))
+      .map((key) => `${key} ${short(check[key])}`)
+      .join(', '),
+  ].join(': ');
+  return { detail, ...judge(check, check.label ?? detail, response) };
+}
+
+function judge(check, label, response) {
   if (check.maxMs !== undefined) {
     return {
       label,
@@ -250,7 +257,8 @@ export async function runScenario(scenario, options) {
       const message = response.body?.errors?.[0]?.message;
       const checks = [
         {
-          label: 'GraphQL geeft een duidelijke fout',
+          label: 'De API antwoordt met een duidelijke foutmelding',
+          detail: 'errors[0].message: exists',
           ok: !!message,
           actual: message ?? 'geen fout',
           expected: 'errors[0].message',
@@ -266,7 +274,8 @@ export async function runScenario(scenario, options) {
     if (scenario.kind === 'graphql' && response.body?.errors?.length) {
       const checks = [
         {
-          label: 'GraphQL zonder fouten',
+          label: 'De API antwoordt zonder foutmelding',
+          detail: 'errors: length 0',
           ok: false,
           actual: short(response.body.errors[0].message),
           expected: 'geen errors',
