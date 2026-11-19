@@ -554,7 +554,7 @@
     {
       "id": "API-40",
       "area": "hierarchie",
-      "title": "Bladeren: topconcepten van VTMK",
+      "title": "Hiërarchie: topconcepten van VTMK",
       "what": "We openen de boom van de modethesaurus. Het bovenste niveau moet verschijnen, met takken die je kunt openklappen.",
       "requirement": ["F5.1"],
       "kind": "graphql",
@@ -589,7 +589,7 @@
     {
       "id": "API-41",
       "area": "hierarchie",
-      "title": "Bladeren: nauwere termen van \"kleding\" met hun bredere term",
+      "title": "Hiërarchie: nauwere termen van \"kleding\" met hun bredere term",
       "what": "We klappen “kleding” open. De termen eronder verschijnen, en ze kennen hun bredere term.",
       "requirement": ["F5.1", "F2.23"],
       "kind": "graphql",
@@ -612,14 +612,14 @@
     {
       "id": "API-42",
       "area": "hierarchie",
-      "title": "Alleen conceptbronnen bieden bladeren aan",
-      "what": "Bladeren kan alleen in bronnen met een boomstructuur. De catalogus geeft aan welke bronnen dat zijn.",
+      "title": "Alleen conceptbronnen bieden hiërarchisch navigeren aan",
+      "what": "Hiërarchisch navigeren kan alleen in bronnen met een boomstructuur. De catalogus geeft aan welke bronnen dat zijn.",
       "requirement": ["F5.1", "F3.9"],
       "kind": "graphql",
       "query": "{ sources { uri features { type } } }",
       "checks": [
         {
-          "label": "Minstens één bron biedt bladeren aan",
+          "label": "Minstens één bron biedt hiërarchisch navigeren aan",
           "path": "data.sources[*].features[*].type",
           "some": true,
           "equals": "HIERARCHY"
@@ -629,8 +629,8 @@
     {
       "id": "API-43",
       "area": "hierarchie",
-      "title": "Bladeren in een personenbron geeft een duidelijke fout",
-      "what": "We proberen te bladeren in een personenbron, die geen boom heeft. Het netwerk moet dat duidelijk zeggen.",
+      "title": "Hiërarchisch navigeren in een personenbron geeft een duidelijke fout",
+      "what": "We proberen de boom te openen van een personenbron, die er geen heeft. Het netwerk moet dat duidelijk zeggen.",
       "requirement": ["F5.1"],
       "kind": "graphql",
       "query": "{ browse(source: \"https://data.rkd.nl/rkdartists\") { uri } }",
