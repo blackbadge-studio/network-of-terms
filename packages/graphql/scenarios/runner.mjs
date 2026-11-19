@@ -9,6 +9,8 @@
  * - graphql: `query`, optional `variables`, `headers`, `repeat` (runs the request that many times
  *   and checks the last answer, e.g. to see a cache hit).
  * - http: `path`, optional `base` ('api' default, or 'ui'), `method`, `headers`.
+ * `cli: true` marks a request only the CLI can send (a browser sends its own CORS preflight and hides
+ *   it from scripts); the simulator reports such a scenario as skipped.
  * Checks select values with a small path syntax (`data.terms[*].result.__typename`, `[0]`, `[*]`)
  * and test them: exists, equals, oneOf, contains, notContains, matches, length {min,max},
  * count {min,max}, min/max (numbers), some (any instead of every), plus maxMs, status, header.
@@ -228,6 +230,15 @@ export async function runScenario(scenario, options) {
       ms: 0,
       checks: [],
       error: 'Geen UI-adres opgegeven',
+    };
+  }
+  if (scenario.cli && typeof document !== 'undefined') {
+    return {
+      ...base,
+      status: 'skipped',
+      ms: 0,
+      checks: [],
+      error: 'Alleen via de commandline: een browser stuurt dit verzoek zelf',
     };
   }
   try {

@@ -502,7 +502,7 @@
       "title": "Bladeren: topconcepten van VTMK",
       "requirement": ["F5.1"],
       "kind": "graphql",
-      "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\") { uri result { __typename ... on BrowseNodes { nodes { uri prefLabel hasNarrower } } } } }",
+      "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\", languages: [nl]) { uri result { __typename ... on BrowseNodes { nodes { uri prefLabel hasNarrower } } } } }",
       "checks": [
         {
           "path": "data.browse.result.__typename",
@@ -533,7 +533,7 @@
       "title": "Bladeren: nauwere termen van \"kleding\" met hun bredere term",
       "requirement": ["F5.1", "F2.23"],
       "kind": "graphql",
-      "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\", uri: \"https://vtmk.data.momu.be/id/105730\") { result { ... on BrowseNodes { nodes { prefLabel broader { uri } } } } } }",
+      "query": "{ browse(source: \"https://vtmk.data.momu.be/id/100001\", uri: \"https://vtmk.data.momu.be/id/105730\", languages: [nl]) { result { ... on BrowseNodes { nodes { prefLabel broader { uri } } } } } }",
       "checks": [
         {
           "path": "data.browse.result.nodes[*].prefLabel",
@@ -727,6 +727,7 @@
       "title": "CORS staat externe applicaties toe",
       "requirement": ["F8.1", "F11.7"],
       "kind": "http",
+      "cli": true,
       "path": "/graphql",
       "checks": [
         {
