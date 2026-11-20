@@ -261,12 +261,23 @@
     {
       "id": "API-07",
       "area": "meerdere",
-      "title": "Typefilter: enkel personen",
-      "what": "We zoeken “Rubens” en vragen alleen personen. Bronnen zonder personen worden niet bevraagd.",
+      "title": "Filteren op type via genres: enkel personen",
+      "what": "Een type is een genre. We vragen eerst welke bronnen personen bevatten en zoeken dan “Rubens” met het genre ‘personen’ in twee gemengde bronnen. Die geven alleen hun personen terug.",
       "requirement": ["F2.4", "F2.10"],
       "kind": "graphql",
-      "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-personen\", \"https://data.rkd.nl/rkdartists\", \"https://vtmk.data.momu.be/id/100001\"], query: \"Rubens\", types: [PERSON]) { source { uri } result { __typename ... on Terms { terms { uri prefLabel resultType } } ... on Error { message } } } }",
+      "query": "{ sources(genres: [\"https://termennetwerk.meemoo.be/genres/persoon\"]) { uri } terms(sources: [\"https://www.wikidata.org#alle-entiteiten\", \"https://data.rkd.nl/rkdartists\"], query: \"Rubens\", genres: [\"https://termennetwerk.meemoo.be/genres/persoon\"]) { source { uri } result { __typename ... on Terms { terms { uri prefLabel resultType } } ... on Error { message } } } }",
       "checks": [
+        {
+          "label": "RKDartists hoort bij de bronnen met personen",
+          "path": "data.sources[*].uri",
+          "some": true,
+          "equals": "https://data.rkd.nl/rkdartists"
+        },
+        {
+          "label": "De modethesaurus (alleen concepten) hoort daar niet bij",
+          "path": "data.sources[*].uri",
+          "notContains": "vtmk"
+        },
         {
           "label": "Elk resultaat is een persoon",
           "path": "data.terms[*].result.terms[*].resultType",
@@ -276,11 +287,6 @@
           "label": "Er is minstens één persoon gevonden",
           "count": "data.terms[*].result.terms[*]",
           "min": 1
-        },
-        {
-          "label": "De modethesaurus (alleen begrippen) wordt overgeslagen",
-          "path": "data.terms[*].source.uri",
-          "notContains": "vtmk"
         }
       ],
       "headers": {
@@ -779,7 +785,7 @@
       "id": "API-25",
       "area": "docs",
       "title": "Schema beschrijft resultaatstypes, filters en foutcodes",
-      "what": "De API beschrijft zichzelf. We controleren dat de types, de filters en de foutmeldingen in die beschrijving staan.",
+      "what": "De API beschrijft zichzelf. We controleren dat de types, het filter en de foutmeldingen in die beschrijving staan.",
       "requirement": ["F11.1", "F11.2", "F4.12"],
       "kind": "graphql",
       "query": "{ __schema { types { name } } __type(name: \"Query\") { fields { name args { name } } } }",
@@ -803,10 +809,10 @@
           "equals": "NotFoundError"
         },
         {
-          "label": "Zoeken kan filteren op type",
+          "label": "Zoeken kan filteren op genre, en zo op type",
           "path": "data.__type.fields[*].args[*].name",
           "some": true,
-          "equals": "types"
+          "equals": "genres"
         }
       ]
     },
@@ -1088,17 +1094,33 @@
     {
       "id": "API-36",
       "area": "nl",
-      "title": "Genrefilter blijft beschikbaar",
-      "what": "Het filter op genre uit de Nederlandse code blijft beschikbaar.",
+      "title": "Genrefilter blijft beschikbaar, met de Vlaamse genrelijst",
+      "what": "Het filter op genre uit de Nederlandse code blijft beschikbaar. De genres komen uit de eigen Vlaamse lijst, met de vijf types uit het bestek erin.",
       "requirement": ["§3.7"],
       "kind": "graphql",
-      "query": "{ sources { uri features { type } } }",
+      "query": "{ sources { uri features { type } genres { uri name } } }",
       "checks": [
         {
           "label": "Minstens één bron biedt het genrefilter aan",
           "path": "data.sources[*].features[*].type",
           "some": true,
           "equals": "GENRE_FILTER"
+        },
+        {
+          "label": "Elk genre komt uit de Vlaamse lijst, niet uit de Nederlandse",
+          "path": "data.sources[*].genres[*].uri",
+          "matches": "^https://termennetwerk\\.meemoo\\.be/genres/"
+        },
+        {
+          "label": "Het type ‘gebeurtenis’ staat in de lijst",
+          "path": "data.sources[*].genres[*].uri",
+          "some": true,
+          "equals": "https://termennetwerk.meemoo.be/genres/gebeurtenis"
+        },
+        {
+          "label": "Elk genre heeft een naam",
+          "path": "data.sources[*].genres[*].name",
+          "matches": "^(?!Unknown$).+"
         }
       ]
     },
