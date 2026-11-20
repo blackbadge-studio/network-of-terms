@@ -13,7 +13,13 @@ import { existsSync, readFileSync } from 'fs';
 import { config } from './config.js';
 import { extractMonitorConfigs } from './sync/monitor-sync.js';
 import { LdesSerializer, enrichObservations } from './ldes/serializer.js';
-import { UptimeReader, summarize, type UptimeSummary } from './uptime.js';
+import {
+  UptimeReader,
+  isDay,
+  summarize,
+  type DayCheck,
+  type UptimeSummary,
+} from './uptime.js';
 
 const logger = pino({ level: 'info' });
 
@@ -143,6 +149,45 @@ try {
       return reply
         .status(503)
         .send({ status: 'error', message: 'Uptime history unavailable' });
+    }
+  });
+
+  // The checks behind one day of one source, for a status page that lets a visitor click a day:
+  // when each check ran, whether it succeeded, how long it took and what went wrong.
+  const checksCache = new Map<string, { at: number; checks: DayCheck[] }>();
+  fastify.get('/uptime/checks', async (request, reply) => {
+    const { source, date } = request.query as {
+      source?: string;
+      date?: string;
+    };
+    if (!source || !isDay(date)) {
+      return reply.status(400).send({
+        status: 'error',
+        message: 'Expected ?source=<source URI>&date=YYYY-MM-DD',
+      });
+    }
+    if (!monitors.some((monitor) => monitor.identifier === source)) {
+      return reply
+        .status(404)
+        .send({ status: 'error', message: 'Unknown source' });
+    }
+    const key = `${source} ${date}`;
+    const cached = checksCache.get(key);
+    if (cached && Date.now() - cached.at < 60_000) {
+      return reply.send({ source, date, checks: cached.checks });
+    }
+    try {
+      const checks = await uptimeReader.dayChecks(source, date);
+      if (checksCache.size > 500) {
+        checksCache.clear();
+      }
+      checksCache.set(key, { at: Date.now(), checks });
+      return reply.send({ source, date, checks });
+    } catch (error) {
+      logger.error({ error }, 'Checks of a day failed');
+      return reply
+        .status(503)
+        .send({ status: 'error', message: 'Check history unavailable' });
     }
   });
 

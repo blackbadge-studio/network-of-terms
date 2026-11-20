@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { summarize } from '../src/uptime.js';
+import { isDay, summarize } from '../src/uptime.js';
 
 const sources = [
   {
@@ -76,5 +76,15 @@ describe('summarize', () => {
   it('adds up all sources for the overall figures', () => {
     expect(summary.uptime).toEqual({ last24h: 1, last7d: 0.75, period: 0.75 });
     expect(summary.measuredSince).toBe('2026-11-01');
+  });
+});
+
+describe('isDay', () => {
+  it('accepts a calendar day and nothing else', () => {
+    expect(isDay('2026-11-20')).toBe(true);
+    expect(isDay('2026-13-40')).toBe(false);
+    expect(isDay('20 november')).toBe(false);
+    expect(isDay("2026-11-20'; drop table observations")).toBe(false);
+    expect(isDay(undefined)).toBe(false);
   });
 });

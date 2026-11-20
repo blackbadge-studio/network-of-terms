@@ -24,6 +24,21 @@ export interface LatestCheck {
   responseTimeMs: number;
 }
 
+/** One check of one source, for the detail of a day. */
+export interface DayCheck {
+  observedAt: string;
+  success: boolean;
+  responseTimeMs: number;
+  /** What went wrong, as the monitor noted it; null for a check that succeeded. */
+  errorMessage: string | null;
+}
+
+/** A calendar day as a status page asks for it: 2026-11-20. */
+export const isDay = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+
 export interface MonitoredSource {
   uri: string;
   name: Record<string, string>;
@@ -188,6 +203,23 @@ export class UptimeReader {
       from observations
       where observed_at >= (now() at time zone 'UTC') - interval '7 days'
       group by 1
+    `;
+    return [...rows];
+  }
+
+  /** Every check of one source on one calendar day (Europe/Brussels), oldest first. */
+  async dayChecks(monitor: string, day: string): Promise<DayCheck[]> {
+    const rows = await this.sql<DayCheck[]>`
+      select
+        to_char(observed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as "observedAt",
+        success,
+        response_time_ms as "responseTimeMs",
+        left(error_message, 300) as "errorMessage"
+      from observations
+      where monitor = ${monitor}
+        and observed_at >= (${day}::date::timestamp at time zone 'Europe/Brussels') at time zone 'UTC'
+        and observed_at < ((${day}::date + 1)::timestamp at time zone 'Europe/Brussels') at time zone 'UTC'
+      order by observed_at
     `;
     return [...rows];
   }
