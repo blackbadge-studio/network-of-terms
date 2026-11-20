@@ -758,6 +758,54 @@ describe('Server', () => {
     );
   });
 
+  it('describes a source in a catalog language when labels are asked in another one', async () => {
+    // A source that also offers French labels; the catalog itself is written in Dutch and English.
+    // Copies that keep the classes of the test catalog, which come from another build of the
+    // query package than the one this file imports.
+    const copy = <T extends object>(object: T, changes: object): T =>
+      Object.assign(
+        Object.create(Object.getPrototypeOf(object)),
+        object,
+        changes,
+      );
+    const french = copy(catalog, {
+      datasets: catalog.datasets.map((dataset) =>
+        dataset.iri === 'https://data.rkd.nl/rkdartists'
+          ? copy(dataset, { inLanguage: [...dataset.inLanguage, 'fr'] })
+          : dataset,
+      ),
+    });
+    const withFrench = await server(french, config);
+    const ask = async (languages: string, acceptLanguage: string) =>
+      (
+        await withFrench.inject({
+          method: 'POST',
+          url: '/graphql',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept-Language': acceptLanguage,
+          },
+          payload: {
+            query: `query { terms(sources: ["https://data.rkd.nl/rkdartists"], query: "rembrandt", languages: [${languages}]) { source { name description } } }`,
+          },
+        })
+      ).json();
+    const rkd = catalog.getDatasetByIri('https://data.rkd.nl/rkdartists')!;
+
+    // French first: the source is described in the language of the request.
+    const inFrench = await ask('fr', 'en');
+    expect(inFrench.errors).toBeUndefined();
+    expect(inFrench.data.terms[0].source.description).toEqual(
+      rkd.description.en,
+    );
+    // The first requested language the catalog is written in decides.
+    const thenDutch = await ask('fr, nl', 'en');
+    expect(thenDutch.data.terms[0].source.description).toEqual(
+      rkd.description.nl,
+    );
+    await withFrench.close();
+  });
+
   it('has no types argument: a result type is asked for as a genre', async () => {
     const response = await httpServer.inject({
       method: 'POST',

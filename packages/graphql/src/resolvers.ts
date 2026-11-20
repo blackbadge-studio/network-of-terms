@@ -73,10 +73,10 @@ async function queryTerms(
   const catalog: Catalog = context.catalog;
   const sources = args.sources;
   const started = performance.now();
-  const catalogLanguage = [
-    ...(args.languages ?? []),
+  const catalogLanguage = catalogLanguageOf(
+    args.languages,
     context.catalogLanguage,
-  ][0];
+  );
   const cache: ResultCache = context.cache;
   const ttl: number = context.cacheTtl?.terms ?? 0;
   const keyFor = (source: string) =>
@@ -208,10 +208,10 @@ async function lookupTerms(object: any, args: any, context: any) {
     );
   }
   const misses = (args.uris as string[]).filter((uri) => !hits.has(uri));
-  const catalogLanguage = [
-    ...(args.languages ?? []),
+  const catalogLanguage = catalogLanguageOf(
+    args.languages,
     context.catalogLanguage,
-  ][0];
+  );
 
   const service = new LookupService(
     context.catalog,
@@ -359,6 +359,21 @@ function resolveTermsResponse(
 class TranslatedTerms {
   constructor(readonly terms: object[]) {}
 }
+
+/** The languages the catalog describes its sources in, as the server negotiates them. */
+const catalogLanguages = ['nl', 'en'];
+
+/**
+ * The language to describe sources in: the first requested language the catalog is written in,
+ * else the language of the request. A source may offer labels in a language the catalog has no
+ * descriptions in (fr, fy); asking for such a language first used to fail on `Source.name`.
+ */
+const catalogLanguageOf = (
+  languages: string[] | undefined,
+  requestLanguage: string,
+): string =>
+  (languages ?? []).find((language) => catalogLanguages.includes(language)) ??
+  requestLanguage;
 
 const datasetOf = (catalog: Catalog, distribution: Distribution) =>
   catalog.getDatasetByDistributionIri(distribution.iri);
@@ -663,7 +678,12 @@ async function browseHierarchy(
     logger: context.app.log,
   }).browse(parent, distribution, args.limit, args.timeoutMs);
   return {
-    source: source(distribution, dataset, languages[0], context.statusClient),
+    source: source(
+      distribution,
+      dataset,
+      catalogLanguageOf(args.languages, context.catalogLanguage),
+      context.statusClient,
+    ),
     uri: args.uri ?? null,
     result:
       response.result instanceof Error
