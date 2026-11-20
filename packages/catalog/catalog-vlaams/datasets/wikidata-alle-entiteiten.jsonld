@@ -11,7 +11,19 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+      "@id": "https://termennetwerk.meemoo.be/genres/concept"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/persoon"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/organisatie"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/plaats"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/gebeurtenis"
     }
   ],
   "creator": [{ "@id": "https://www.wikidata.org/entity/Q180" }],
@@ -29,7 +41,6 @@
   ],
   "inLanguage": ["nl", "en"],
   "license": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "vtn:resultType": ["concept", "person", "organization", "place", "event"],
   "distribution": [
     {
       "@id": "https://query.wikidata.org/sparql#alle-entiteiten",

@@ -29,13 +29,16 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+      "@id": "https://termennetwerk.meemoo.be/genres/concept"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Materialen"
+      "@id": "https://termennetwerk.meemoo.be/genres/objecten"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Technieken"
+      "@id": "https://termennetwerk.meemoo.be/genres/materialen"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/technieken"
     }
   ],
   "creator": [
@@ -64,7 +67,6 @@
     }
   ],
   "inLanguage": ["nl", "en"],
-  "vtn:resultType": ["concept"],
   "distribution": [
     {
       "@id": "https://vtmk.data.momu.be/PoolParty/sparql/id",

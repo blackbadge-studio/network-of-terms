@@ -15,10 +15,10 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Personen"
+      "@id": "https://termennetwerk.meemoo.be/genres/persoon"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Actoren-en-organismen"
+      "@id": "https://termennetwerk.meemoo.be/genres/organisatie"
     }
   ],
   "creator": [{ "@id": "http://www.getty.edu/research/" }],
@@ -40,7 +40,6 @@
   ],
   "inLanguage": ["en", "nl"],
   "license": "http://opendatacommons.org/licenses/by/1.0/",
-  "vtn:resultType": ["person", "organization"],
   "vtn:typeMapping": [
     {
       "vtn:sourceType": {

@@ -15,13 +15,13 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+      "@id": "https://termennetwerk.meemoo.be/genres/concept"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Locaties"
+      "@id": "https://termennetwerk.meemoo.be/genres/objecten"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Gebouwen"
+      "@id": "https://termennetwerk.meemoo.be/genres/gebouwen"
     }
   ],
   "creator": [{ "@id": "https://stad.gent" }],
@@ -38,7 +38,6 @@
     }
   ],
   "inLanguage": ["nl"],
-  "vtn:resultType": ["concept"],
   "distribution": [
     {
       "@id": "https://stad.gent/sparql#thesaurus",

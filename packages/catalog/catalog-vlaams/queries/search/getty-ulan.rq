@@ -12,7 +12,8 @@ PREFIX void: <http://rdfs.org/ns/void#>
 
 # ULAN: persons and corporate bodies. The gvp class (gvp:PersonConcept, gvp:GroupConcept) is passed
 # through and mapped to the central result type by the catalog's vtn:typeMapping; schema:Person and
-# schema:Organization are added as well so the person details are read.
+# schema:Organization are added as well so the person details are read. The source is mixed, so
+# the genre that was asked for decides which of the two classes is searched (GENRE_FILTER).
 CONSTRUCT {
     ?uri a skos:Concept, ?type, ?schemaType ;
         skos:prefLabel ?prefLabel ;
@@ -31,7 +32,11 @@ WHERE {
             ?uri luc:term ?query ;
                 a ?type ;
                 void:inDataset <http://vocab.getty.edu/dataset/ulan> .
-            VALUES ?type { gvp:PersonConcept gvp:GroupConcept }
+            VALUES ?genreUri { ?genres }
+            VALUES (?genreUri ?type) {
+                (<https://termennetwerk.meemoo.be/genres/persoon> gvp:PersonConcept)
+                (<https://termennetwerk.meemoo.be/genres/organisatie> gvp:GroupConcept)
+            }
         }
         #LIMIT#
     }

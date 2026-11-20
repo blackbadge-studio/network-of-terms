@@ -9,9 +9,11 @@ PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX wikibase: <http://wikiba.se/ontology#>
 
-# Wikidata without restriction, for terms that no other source covers.
+# Wikidata without restriction, for terms that no other source covers. The source is mixed, so
+# the template itself says of every hit which of the five result types it is, and keeps only the
+# genres that were asked for (GENRE_FILTER).
 CONSTRUCT {
-    ?item a skos:Concept ;
+    ?item a skos:Concept, ?type ;
         skos:prefLabel ?prefLabel ;
         skos:altLabel ?altLabel ;
         skos:scopeNote ?description ;
@@ -21,26 +23,67 @@ CONSTRUCT {
 }
 WHERE {
     {
-        SELECT DISTINCT ?item ?score WHERE {
-            # Blazegraph otherwise reorders the type restriction before the search service and
-            # scans millions of items; with the optimizer off the patterns run as written.
-            hint:Query hint:optimizer "None" .
-            SERVICE wikibase:mwapi {
-                bd:serviceParam wikibase:endpoint "www.wikidata.org" ;
-                    wikibase:api "Search" ;
-                    wikibase:limit "once" ;
-                    mwapi:language "nl" ;
-                    mwapi:srsearch ?query .
-                ?item wikibase:apiOutputItem mwapi:title .
-                ?ordinal wikibase:apiOrdinal true.
-            }
-            BIND(-?ordinal AS ?score)
+        SELECT ?item ?score ?type WHERE {
+            {
+                SELECT ?item ?score (COALESCE(MAX(?rank), 0) AS ?best) WHERE {
+                    # Blazegraph otherwise reorders the class check before the search service and
+                    # scans millions of items; with the optimizer off the patterns run as written.
+                    hint:Query hint:optimizer "None" .
+                    SERVICE wikibase:mwapi {
+                        bd:serviceParam wikibase:endpoint "www.wikidata.org" ;
+                            wikibase:api "Search" ;
+                            wikibase:limit "once" ;
+                            mwapi:language "nl" ;
+                            # The best hundred hits are classified. Unbounded, the search hands
+                            # over five hundred, and classifying those takes five to nine seconds.
+                            mwapi:srlimit "100" ;
+                            mwapi:srsearch ?query .
+                        ?item wikibase:apiOutputItem mwapi:title .
+                        ?ordinal wikibase:apiOrdinal true.
+                    }
+                    BIND(-?ordinal AS ?score)
 
-            # ‘mul’ is Wikidata’s ‘default for all languages’ label.
-            ?item rdfs:label ?prefLabel .
-            FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
+                    # ‘mul’ is Wikidata’s ‘default for all languages’ label.
+                    FILTER EXISTS {
+                        ?item rdfs:label ?prefLabel .
+                        FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
+                    }
+
+                    # What the item is an instance of, up to six subclass steps away: human (Q5),
+                    # geographic location (Q2221906), organization (Q43229), occurrence (Q1190554).
+                    # A fixed number of steps and not wdt:P279*: Blazegraph runs these as plain
+                    # joins, where the open-ended path took five to thirteen seconds per search.
+                    OPTIONAL {
+                        VALUES (?class ?rank) {
+                            (wd:Q5 4)
+                            (wd:Q2221906 3)
+                            (wd:Q43229 2)
+                            (wd:Q1190554 1)
+                        }
+                        { ?item wdt:P31 ?class . }
+                        UNION { ?item wdt:P31/wdt:P279 ?class . }
+                        UNION { ?item wdt:P31/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?item wdt:P31/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?item wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?item wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?item wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                    }
+                }
+                GROUP BY ?item ?score
+            }
+
+            # One type per item, the highest rank it reaches: a municipality is an organization
+            # too in Wikidata’s class tree, and is a place here. What reaches none is a concept.
+            VALUES (?best ?genreUri ?type) {
+                (4 <https://termennetwerk.meemoo.be/genres/persoon> schema:Person)
+                (3 <https://termennetwerk.meemoo.be/genres/plaats> schema:Place)
+                (2 <https://termennetwerk.meemoo.be/genres/organisatie> schema:Organization)
+                (1 <https://termennetwerk.meemoo.be/genres/gebeurtenis> schema:Event)
+                (0 <https://termennetwerk.meemoo.be/genres/concept> skos:Concept)
+            }
+            VALUES ?genreUri { ?genres }
         }
-        ORDER BY ASC(?ordinal)
+        ORDER BY DESC(?score)
         #LIMIT#
     }
 

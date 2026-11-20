@@ -35,16 +35,16 @@ De Vlaamse catalogus blijft schema.org-JSON-LD zoals de Nederlandse, aangevuld
 met een kleine eigen namespace `https://termennetwerk.meemoo.be/ns#` (`vtn:`)
 voor wat schema.org niet biedt. SHACL en de catalogus-lens worden mee uitgebreid.
 
-| Veld                             | Op           | Betekenis                                                                                                 |
-| -------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------- |
-| `vtn:timeoutMs`                  | DataDownload | maximale wachttijd voor deze bron; de engine neemt het minimum van dit veld en `timeoutMs` van de request |
-| `vtn:resultType`                 | Dataset      | welke centrale resultaatstypes de bron oplevert (`concept`, `person`, `organization`, `place`, `event`)   |
-| `vtn:typeMapping`                | Dataset      | mapping van `rdf:type` in het bronresultaat naar een centraal resultaatstype                              |
-| `vtn:status`                     | Dataset      | `mvp`, `test`, `candidate`, `preparation`, `deactivated` (bronnenpagina + `sources`-query)                |
-| `vtn:limitations`                | Dataset      | technische beperkingen (vrije tekst, meertalig)                                                           |
-| `schema:contactPoint`            | Dataset      | contactpunten met rol (organisatorisch, technisch, inhoudelijk)                                           |
-| `schema:license`                 | Dataset      | licentie van de bron                                                                                      |
-| BrowseAction (`potentialAction`) | DataDownload | derde sjabloon voor boomnavigatie (topconcepten + nauwere termen van een URI)                             |
+| Veld                             | Op           | Betekenis                                                                                                                               |
+| -------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `vtn:timeoutMs`                  | DataDownload | maximale wachttijd voor deze bron; de engine neemt het minimum van dit veld en `timeoutMs` van de request                               |
+| `vtn:resultType`                 | genre        | het centrale resultaatstype waar een genre uit de Vlaamse genrelijst voor staat (`concept`, `person`, `organization`, `place`, `event`) |
+| `vtn:typeMapping`                | Dataset      | mapping van `rdf:type` in het bronresultaat naar een centraal resultaatstype                                                            |
+| `vtn:status`                     | Dataset      | `mvp`, `test`, `candidate`, `preparation`, `deactivated` (bronnenpagina + `sources`-query)                                              |
+| `vtn:limitations`                | Dataset      | technische beperkingen (vrije tekst, meertalig)                                                                                         |
+| `schema:contactPoint`            | Dataset      | contactpunten met rol (organisatorisch, technisch, inhoudelijk)                                                                         |
+| `schema:license`                 | Dataset      | licentie van de bron                                                                                                                    |
+| BrowseAction (`potentialAction`) | DataDownload | derde sjabloon voor boomnavigatie (topconcepten + nauwere termen van een URI)                                                           |
 
 ## Bronnen
 

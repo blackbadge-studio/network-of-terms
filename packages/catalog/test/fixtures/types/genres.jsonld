@@ -1,0 +1,34 @@
+{
+  "@context": {
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "vtn": "https://termennetwerk.meemoo.be/ns#"
+  },
+  "@graph": [
+    {
+      "@id": "https://example.org/genres/persoon",
+      "@type": "skos:Concept",
+      "skos:prefLabel": [
+        { "@language": "nl", "@value": "Personen" },
+        { "@language": "en", "@value": "Persons" }
+      ],
+      "vtn:resultType": "person"
+    },
+    {
+      "@id": "https://example.org/genres/organisatie",
+      "@type": "skos:Concept",
+      "skos:prefLabel": [
+        { "@language": "nl", "@value": "Organisaties" },
+        { "@language": "en", "@value": "Organisations" }
+      ],
+      "vtn:resultType": "organization"
+    },
+    {
+      "@id": "https://example.org/genres/schilderkunst",
+      "@type": "skos:Concept",
+      "skos:prefLabel": [
+        { "@language": "nl", "@value": "Schilderkunst" },
+        { "@language": "en", "@value": "Painting" }
+      ]
+    }
+  ]
+}

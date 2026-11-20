@@ -11,7 +11,7 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Locaties"
+      "@id": "https://termennetwerk.meemoo.be/genres/plaats"
     }
   ],
   "creator": [{ "@id": "https://www.wikidata.org/entity/Q180" }],
@@ -28,7 +28,6 @@
   ],
   "inLanguage": ["nl", "en"],
   "license": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "vtn:resultType": ["place"],
   "distribution": [
     {
       "@id": "https://query.wikidata.org/sparql#vlaanderen-plaatsen",

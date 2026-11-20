@@ -5,7 +5,7 @@ import {
   FeatureType,
   SparqlDistribution,
 } from '@netwerk-digitaal-erfgoed/network-of-terms-query';
-import { getCatalog } from '../src/index.js';
+import { dereferenceGenre, getCatalog } from '../src/index.js';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -197,11 +197,13 @@ describe('Catalog', () => {
     expect(fast.effectiveTimeoutMs(10_000)).toBe(10_000);
   });
 
-  it('reads result types and type mappings (vtn:resultType, vtn:typeMapping)', async () => {
+  it('reads result types from the genres of the catalog’s own list, and type mappings (vtn:resultType, vtn:typeMapping)', async () => {
     const catalog = await getCatalog(
       resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/types/'),
     );
     const artists = catalog.getDatasetByIri('https://example.org/artists')!;
+    // Two of its three genres stand for a result type; the third is a subject.
+    expect(artists.genres).toHaveLength(3);
     expect(artists.resultTypes).toEqual(['person', 'organization']);
     expect(
       artists.typeMappings.map((mapping) => [
@@ -215,6 +217,14 @@ describe('Catalog', () => {
       ]),
     );
     expect(artists.typeMappings).toHaveLength(2);
+    // The list names its genres itself, so nothing is fetched to name them.
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    expect(
+      (await dereferenceGenre('https://example.org/genres/schilderkunst'))
+        ?.name,
+    ).toEqual({ nl: 'Schilderkunst', en: 'Painting' });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
     // Datasets without declarations default to nothing declared.
     const plain = (
       await getCatalog(
@@ -240,7 +250,38 @@ describe('Catalog', () => {
     const aat = vlaams.getDatasetByIri('http://vocab.getty.edu/aat')!;
     expect(aat.getSparqlDistribution()!.searchQuery).toContain('luc:term');
     expect(aat.getSparqlDistribution()!.timeoutMs).toBe(8000);
+    // The Flemish list has URIs of its own; a source’s result types follow from its genres.
+    expect(aat.genres).toContain(
+      'https://termennetwerk.meemoo.be/genres/materialen',
+    );
     expect(aat.resultTypes).toEqual(['concept']);
+    expect(
+      vlaams.getDatasetByIri('https://www.wikidata.org#alle-entiteiten')!
+        .resultTypes,
+    ).toEqual(['concept', 'person', 'organization', 'place', 'event']);
+    for (const dataset of vlaams.datasets) {
+      for (const genre of dataset.genres) {
+        expect(
+          (await dereferenceGenre(genre))?.name.nl,
+          `${dataset.iri} ${genre}`,
+        ).toBeTruthy();
+      }
+    }
+    // A mixed source filters on the genre in its own search template.
+    for (const mixed of [
+      'https://data.rkd.nl/rkdartists',
+      'http://vocab.getty.edu/ulan',
+      'https://www.wikidata.org#alle-entiteiten',
+      'http://vocab.getty.edu/aat',
+    ]) {
+      expect(
+        vlaams
+          .getDatasetByIri(mixed)!
+          .getSparqlDistribution()!
+          .hasFeature(FeatureType.GENRE_FILTER),
+        mixed,
+      ).toBe(true);
+    }
     // Concept thesauri carry a browse template and the HIERARCHY feature; person sources do not.
     const vtmk = vlaams.getDatasetByIri('https://vtmk.data.momu.be/id/100001')!;
     expect(vtmk.getSparqlDistribution()!.browseQuery).toContain('?parent');

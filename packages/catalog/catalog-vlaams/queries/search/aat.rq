@@ -1,0 +1,148 @@
+PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+PREFIX luc: <http://www.ontotext.com/owlim/lucene#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX void: <http://rdfs.org/ns/void#>
+
+# The Dutch template (catalog/queries/search/aat.rq) with the genres of the Flemish list, which
+# has URIs of its own, and one branch more for the type genre. A change to the Dutch template is
+# made here too.
+CONSTRUCT {
+    ?uri a skos:Concept ;
+        skos:prefLabel ?prefLabel ;
+        skos:altLabel ?altLabel ;
+        skos:scopeNote ?scopeNote ;
+        rdfs:seeAlso ?rdfs_seeAlso ;
+        skos:broader ?broader_uri ;
+        skos:narrower ?narrower_uri ;
+        skos:exactMatch ?exactMatch_uri .
+    ?broader_uri skos:prefLabel ?broader_prefLabel .
+    ?narrower_uri skos:prefLabel ?narrower_prefLabel .
+    ?exactMatch_uri skos:prefLabel ?exactMatch_prefLabel .
+}
+WHERE {
+    VALUES ?language {
+        aat:300388256 # Dutch
+        aat:300388277 # English
+    }
+
+    # Pre-filter by language BEFORE the expensive subquery (based on Comunica query optimization).
+    ?uri skosxl:prefLabel [
+        dcterms:language ?language ; # Faster than FILTER(langMatches(...)): https://vocab.getty.edu/queries#Find_Terms_by_Language_Tag
+        skosxl:literalForm ?prefLabel
+    ]
+
+    {
+        SELECT DISTINCT ?uri WHERE {
+            ?uri luc:term ?query ;
+                a ?type ;
+                void:inDataset <http://vocab.getty.edu/dataset/aat> .
+            ?type rdfs:subClassOf gvp:Subject .
+            FILTER (?type != gvp:Subject) .
+            FILTER NOT EXISTS { ?uri a gvp:GuideTerm }
+
+            {
+                VALUES ?genreUri { ?genres }
+                # Materialen
+                FILTER(?genreUri = <https://termennetwerk.meemoo.be/genres/materialen>)
+                ?uri gvp:broaderPreferred+ <http://vocab.getty.edu/aat/300010357> .
+            }
+            UNION
+            {
+                VALUES ?genreUri { ?genres }
+                # Stijlen en Periodes
+                FILTER(?genreUri IN (
+                    <https://termennetwerk.meemoo.be/genres/stijlen>,
+                    <https://termennetwerk.meemoo.be/genres/periodes>
+                ))
+                ?uri gvp:broaderPreferred+ <http://vocab.getty.edu/aat/300015646> .
+            }
+            UNION
+            {
+                VALUES ?genreUri { ?genres }
+                # Processen en Technieken
+                FILTER(?genreUri = <https://termennetwerk.meemoo.be/genres/technieken>)
+                ?uri gvp:broaderPreferred+ <http://vocab.getty.edu/aat/300053001> .
+            }
+            UNION
+            {
+                # All other subject genres: no hierarchy restriction
+                VALUES ?genreUri { ?genres }
+                FILTER(?genreUri NOT IN (
+                    <https://termennetwerk.meemoo.be/genres/materialen>,
+                    <https://termennetwerk.meemoo.be/genres/stijlen>,
+                    <https://termennetwerk.meemoo.be/genres/periodes>,
+                    <https://termennetwerk.meemoo.be/genres/technieken>,
+                    <https://termennetwerk.meemoo.be/genres/concept>
+                ))
+            }
+            UNION
+            {
+                # The type genre: every term here is a concept, so it restricts nothing. It only
+                # counts when no subject genre is asked for beside it, or ‘concepts, materials’
+                # would return the whole thesaurus instead of the materials.
+                VALUES ?genreUri { ?genres }
+                FILTER(?genreUri = <https://termennetwerk.meemoo.be/genres/concept>)
+                FILTER NOT EXISTS {
+                    VALUES ?subjectUri { ?genres }
+                    FILTER(?subjectUri != <https://termennetwerk.meemoo.be/genres/concept>)
+                }
+            }
+        }
+        #LIMIT#
+    }
+    # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
+    # see “One UNION branch per multi-valued property” in the catalog README.
+    # The branches share the ?language values above rather than each declaring their own, which is
+    # also why none of them may sit in an OPTIONAL here: GraphDB stops applying the outer VALUES to
+    # a branch inside one and answers with labels in every language Getty holds.
+    {
+        {
+            ?uri skosxl:prefLabel [
+                dcterms:language ?language ;
+                skosxl:literalForm ?prefLabel
+            ]
+        }
+        UNION {
+            ?uri skosxl:altLabel [
+                dcterms:language ?language ;
+                skosxl:literalForm ?altLabel
+            ]
+        }
+        UNION {
+            ?uri skos:scopeNote [
+                dcterms:language ?language ;
+                rdf:value ?scopeNote
+            ]
+        }
+        UNION {
+            ?uri rdfs:seeAlso ?rdfs_seeAlso
+        }
+        UNION {
+            ?uri gvp:broaderPreferred ?broader_uri .
+            ?broader_uri skosxl:prefLabel [
+                dcterms:language ?language ;
+                skosxl:literalForm ?broader_prefLabel
+            ]
+        }
+        UNION {
+            ?uri skos:narrower ?narrower_uri .
+            ?narrower_uri skosxl:prefLabel [
+                dcterms:language ?language ;
+                skosxl:literalForm ?narrower_prefLabel
+            ]
+        }
+        UNION {
+            ?uri skos:exactMatch ?exactMatch_uri .
+            FILTER(?exactMatch_uri != ?uri) # Exclude self-reference.
+            ?exactMatch_uri skosxl:prefLabel [
+                dcterms:language ?language ;
+                skosxl:literalForm ?exactMatch_prefLabel
+            ]
+        }
+    }
+}

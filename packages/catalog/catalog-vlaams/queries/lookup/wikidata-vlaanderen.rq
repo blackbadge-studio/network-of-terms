@@ -1,3 +1,4 @@
+PREFIX hint: <http://www.bigdata.com/queryHints#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <http://schema.org/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -16,16 +17,58 @@ WHERE {
     # For example:
     # Person: <http://www.wikidata.org/entity/Q5599> (Rubens)
     # Place: <http://www.wikidata.org/entity/Q12990> (Ieper)
-    VALUES ?uri { ?uris }
+    {
+        SELECT ?uri ?type WHERE {
+            {
+                SELECT ?uri (COALESCE(MAX(?rank), 0) AS ?best) WHERE {
+                    # With the optimizer off the patterns run as written, from the given URIs.
+                    # Left to itself Blazegraph starts at the classes and scans every human in
+                    # Wikidata.
+                    hint:Query hint:optimizer "None" .
+                    VALUES ?uri { ?uris }
 
-    # ‘mul’ is Wikidata’s ‘default for all languages’ label.
-    ?uri rdfs:label ?prefLabel .
-    FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
+                    # ‘mul’ is Wikidata’s ‘default for all languages’ label. A plain pattern and
+                    # not FILTER EXISTS: Blazegraph runs that filter before it knows the URIs.
+                    ?uri rdfs:label ?label .
+                    FILTER(LANG(?label) IN ("nl", "en", "mul"))
+
+                    # The same check as in the search template (wikidata-alle-entiteiten.rq), so
+                    # a term is of the same type whether it was searched for or looked up.
+                    OPTIONAL {
+                        VALUES (?class ?rank) {
+                            (wd:Q5 4)
+                            (wd:Q2221906 3)
+                            (wd:Q43229 2)
+                            (wd:Q1190554 1)
+                        }
+                        { ?uri wdt:P31 ?class . }
+                        UNION { ?uri wdt:P31/wdt:P279 ?class . }
+                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
+                    }
+                }
+                GROUP BY ?uri
+            }
+            VALUES (?best ?type) {
+                (4 schema:Person)
+                (3 schema:Place)
+                (2 schema:Organization)
+                (1 schema:Event)
+                (0 skos:Concept)
+            }
+        }
+    }
 
     # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
     # see “One UNION branch per multi-valued property” in the catalog README.
     {
-        { ?uri rdfs:label ?prefLabel }
+        {
+            ?uri rdfs:label ?prefLabel .
+            FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
+        }
         UNION {
             ?uri skos:altLabel ?altLabel .
             FILTER(LANG(?altLabel) IN ("nl", "en", "mul"))
@@ -33,16 +76,6 @@ WHERE {
         UNION {
             ?uri schema:description ?description .
             FILTER(LANG(?description) IN ("nl", "en"))
-        }
-        UNION {
-            ?uri wdt:P31 wd:Q5 .
-            BIND(schema:Person AS ?type)
-        }
-        UNION {
-            # A coordinate location marks a place without walking the class tree (P279*), which
-            # times out on Wikidata for items with deep class hierarchies.
-            ?uri wdt:P625 ?coordinates .
-            BIND(schema:Place AS ?type)
         }
         UNION {
             ?uri wdt:P214 ?viafId .

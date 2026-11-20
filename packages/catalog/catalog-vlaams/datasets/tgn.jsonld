@@ -29,7 +29,7 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Locaties"
+      "@id": "https://termennetwerk.meemoo.be/genres/plaats"
     }
   ],
   "creator": [
@@ -59,7 +59,6 @@
   ],
   "inLanguage": ["en", "nl"],
   "license": "http://opendatacommons.org/licenses/by/1.0/",
-  "vtn:resultType": ["place"],
   "distribution": [
     {
       "@id": "https://vocab.getty.edu/sparql#tgn",

@@ -43,7 +43,7 @@ additions specific to the Network of Terms:
   that holds terms in more than one URI space declares `schema:url` once per prefix, for example the Rights thesaurus,
   which reuses the canonical Creative Commons and RightsStatements.org URIs alongside its own;
 - `schema:inLanguage` is a required property;
-- `schema:genre` is a required property, with values restricted to the list of [Termennetwerk onderwerpen](https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen.html);
+- `schema:genre` is a required property, with values restricted to the list of [Termennetwerk onderwerpen](https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen.html), or in the Flemish catalog to its own list (see [Genres and result types](#genres-and-result-types));
 - `schema:mainEntityOfPage` is a required property;
 - each distribution is a [`schema:DataDownload`](https://schema.org/DataDownload) with `schema:contentUrl` pointing at the SPARQL endpoint and `schema:encodingFormat` set to `application/sparql-query`;
 - each distribution has two or more [`schema:potentialAction`](https://schema.org/potentialAction)s:
@@ -279,14 +279,13 @@ settings that schema.org does not cover. Declare it in the dataset's context:
 
 | Property          | On             | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ----------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vtn:resultType`  | `Dataset`      | The central result types the source yields: `concept`, `person`, `organization`, `place`, `event`. A source that declares them is skipped by a `types` filter that asks for none of them; a source that declares a single type gives that type to every term whose `rdf:type` says nothing more specific. Exposed as `Source.resultTypes`.                                                                                                      |
+| `vtn:resultType`  | `skos:Concept` | On a genre of the catalog's own genre list (see below): the central result type that genre stands for, one of `concept`, `person`, `organization`, `place`, `event`.                                                                                                                                                                                                                                                                            |
 | `vtn:typeMapping` | `Dataset`      | Rules `{ "vtn:sourceType": { "@id": "<class IRI>" }, "vtn:resultType": "person" }` mapping the source's own classes to central result types. They take precedence over the built-in mapping of `schema:Person`, `schema:Organization`, `schema:Place` and `schema:Event` (both schema.org namespaces) and `foaf:Person`/`foaf:Organization`. Every term exposes the derived `resultType` next to its unchanged `rdf:type`s in `additionalType`. |
 | `vtn:timeoutMs`   | `DataDownload` | Per-source timeout in milliseconds. The query engine waits at most the smaller of this value and the request's `timeoutMs` for this source, so a slow source never holds up a federated search longer than its administrator allows. Exposed as `Source.timeoutMs` in the GraphQL API.                                                                                                                                                          |
 
 Example:
 
 ```json
-"vtn:resultType": ["person", "organization"],
 "vtn:typeMapping": [
   { "vtn:sourceType": { "@id": "https://example.org/ns#Artist" }, "vtn:resultType": "person" },
   { "vtn:sourceType": { "@id": "https://example.org/ns#Studio" }, "vtn:resultType": "organization" }
@@ -299,6 +298,54 @@ Example:
   "potentialAction": [...]
 }]
 ```
+
+### Genres and result types
+
+The Dutch catalog takes its genres from RCE's list and fetches their names there. The Flemish
+catalog has a list of its own, [`catalog-vlaams/genres.jsonld`](catalog-vlaams/genres.jsonld): a
+SKOS concept scheme with a Dutch and an English name per genre. A catalog that carries such a list
+names its genres from it; a genre that is in no list is still dereferenced at its IRI, as in the
+Dutch catalog. The list is configuration: adding, renaming or removing a genre is an edit to that
+file.
+
+The Flemish genres have URIs of their own, `https://termennetwerk.meemoo.be/genres/<name>`. Five of
+them are the result types of the tender, marked with `vtn:resultType`:
+
+| Genre         | `vtn:resultType` |
+| ------------- | ---------------- |
+| `concept`     | `concept`        |
+| `persoon`     | `person`         |
+| `organisatie` | `organization`   |
+| `plaats`      | `place`          |
+| `gebeurtenis` | `event`          |
+
+The others are subjects (`materialen`, `technieken`, …). So a result type is asked for the way a
+subject is, with the existing `genres` argument:
+
+- `sources(genres: […])` lists the sources that have one of the genres;
+- `terms(sources: […], genres: […])` filters inside the sources that support it (the feature
+  `GENRE_FILTER`). As in the Dutch catalog, a source takes the requested genres that it has itself
+  and ignores the others; when none of them is its own, it searches all of its genres.
+
+A source's administrator sets its genres in the dataset (`schema:genre`), and nothing else: the
+result types a source yields are the ones its genres stand for. A source with one type genre gives
+that type to every term whose `rdf:type` says nothing more specific. A source with several is
+mixed and filters on the genre in its own search template, which gives it `GENRE_FILTER`:
+
+```sparql
+VALUES ?genreUri { ?genres }
+VALUES (?genreUri ?type) {
+    (<https://termennetwerk.meemoo.be/genres/persoon> schema:Person)
+    (<https://termennetwerk.meemoo.be/genres/organisatie> schema:Organization)
+}
+?uri a ?type .
+```
+
+The template constructs that `?type`, so every result says which type it is (`resultType`).
+RKDartists, ULAN and ‘Wikidata: alle entiteiten’ work this way. The search templates of AAT and
+RKDartists are copies of the Dutch ones with the Flemish genre URIs in them
+(`catalog-vlaams/queries/search/aat.rq`, `rkdartists.rq`): a change to the Dutch template is made
+there too.
 
 ### Hierarchical navigation (`vtn:BrowseAction`)
 

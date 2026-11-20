@@ -11,7 +11,10 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Personen"
+      "@id": "https://termennetwerk.meemoo.be/genres/persoon"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/organisatie"
     }
   ],
   "creator": [{ "@id": "https://rkd.nl" }],
@@ -28,7 +31,6 @@
     }
   ],
   "inLanguage": ["en", "nl"],
-  "vtn:resultType": ["person"],
   "distribution": [
     {
       "@id": "https://api.rkd.triply.cc/datasets/rkd/RKD-SDO-Knowledge-Graph/sparql",
@@ -39,7 +41,7 @@
       "potentialAction": [
         {
           "@type": "SearchAction",
-          "query": "file://../../catalog/queries/search/rkdartists.rq"
+          "query": "file://../queries/search/rkdartists.rq"
         },
         {
           "@type": "FindAction",

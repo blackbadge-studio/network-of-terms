@@ -1,0 +1,265 @@
+{
+  "@context": {
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "vtn": "https://termennetwerk.meemoo.be/ns#"
+  },
+  "@graph": [
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres",
+      "@type": "skos:ConceptScheme",
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Genres van het Vlaams Termennetwerk"
+        },
+        {
+          "@language": "en",
+          "@value": "Genres of the Vlaams Termennetwerk"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/concept",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Concepten"
+        },
+        {
+          "@language": "en",
+          "@value": "Concepts"
+        }
+      ],
+      "vtn:resultType": "concept"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/persoon",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Personen"
+        },
+        {
+          "@language": "en",
+          "@value": "Persons"
+        }
+      ],
+      "vtn:resultType": "person"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/organisatie",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Organisaties"
+        },
+        {
+          "@language": "en",
+          "@value": "Organisations"
+        }
+      ],
+      "vtn:resultType": "organization"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/plaats",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Plaatsen"
+        },
+        {
+          "@language": "en",
+          "@value": "Places"
+        }
+      ],
+      "vtn:resultType": "place"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/gebeurtenis",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Gebeurtenissen"
+        },
+        {
+          "@language": "en",
+          "@value": "Events"
+        }
+      ],
+      "vtn:resultType": "event"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/abstracte-begrippen",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Abstracte begrippen"
+        },
+        {
+          "@language": "en",
+          "@value": "Abstract concepts"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/activiteiten",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Activiteiten"
+        },
+        {
+          "@language": "en",
+          "@value": "Activities"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/fysieke-kenmerken",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Fysieke kenmerken"
+        },
+        {
+          "@language": "en",
+          "@value": "Physical characteristics"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/gebouwen",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Gebouwen"
+        },
+        {
+          "@language": "en",
+          "@value": "Buildings"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/materialen",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Materialen"
+        },
+        {
+          "@language": "en",
+          "@value": "Materials"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/objecten",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Objecten"
+        },
+        {
+          "@language": "en",
+          "@value": "Objects"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/periodes",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Periodes"
+        },
+        {
+          "@language": "en",
+          "@value": "Time periods"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/stijlen",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Stijlen"
+        },
+        {
+          "@language": "en",
+          "@value": "Styles"
+        }
+      ]
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/technieken",
+      "@type": "skos:Concept",
+      "skos:inScheme": {
+        "@id": "https://termennetwerk.meemoo.be/genres"
+      },
+      "skos:prefLabel": [
+        {
+          "@language": "nl",
+          "@value": "Technieken"
+        },
+        {
+          "@language": "en",
+          "@value": "Techniques"
+        }
+      ]
+    }
+  ]
+}

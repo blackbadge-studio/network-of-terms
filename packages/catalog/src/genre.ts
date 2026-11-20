@@ -20,6 +20,18 @@ export class Genre {
   ) {}
 }
 
+/**
+ * Genres that a catalog names itself, in a SKOS list among its files (the Flemish catalog’s
+ * `genres.jsonld`). They are answered from here; every other genre is dereferenced at its IRI.
+ */
+const catalogGenres = new Map<string, Genre>();
+
+export const registerGenres = (genres: Genre[]): void => {
+  for (const genre of genres) {
+    catalogGenres.set(String(genre.iri), genre);
+  }
+};
+
 const cache = new Map<string, { data: Genre; expires: number }>();
 const refreshing = new Set<string>();
 
@@ -94,6 +106,10 @@ const refreshGenre = (genre: IRI, key: string): void => {
 
 export const dereferenceGenre = async (genre: IRI): Promise<Genre | null> => {
   const key = String(genre);
+  const named = catalogGenres.get(key);
+  if (named) {
+    return named;
+  }
   const cached = cache.get(key);
 
   if (cached) {

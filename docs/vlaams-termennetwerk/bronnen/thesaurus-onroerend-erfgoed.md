@@ -66,7 +66,7 @@ geschreven zodra de gehoste endpoint bestaat.
 De Query Engine stuurt SPARQL rechtstreeks naar een endpoint en ondersteunt
 geen TPF. Daarom host meemoo een SPARQL-endpoint (gepland `packages/sparql-host`)
 die dagelijks wordt geladen uit de `c.ttl`-dumps, met één named graph per
-schema. Per schema komt er een catalogusentry met `vtn:resultType: concept`,
+schema. Per schema komt er een catalogusentry met het genre `concept`,
 hergebruik van een generiek SKOS-zoeksjabloon en `vtn:status: preparation` tot
 de endpoint stabiel draait.
 

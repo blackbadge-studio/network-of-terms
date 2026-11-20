@@ -8,9 +8,9 @@
   "name": [{ "@language": "nl", "@value": "Kunstenaars" }],
   "description": [{ "@language": "nl", "@value": "Personen en ateliers" }],
   "genre": [
-    {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Personen"
-    }
+    { "@id": "https://example.org/genres/organisatie" },
+    { "@id": "https://example.org/genres/persoon" },
+    { "@id": "https://example.org/genres/schilderkunst" }
   ],
   "creator": [
     {
@@ -23,7 +23,6 @@
   "url": ["https://example.org/artists/"],
   "mainEntityOfPage": ["https://example.org/artists/about"],
   "inLanguage": "nl",
-  "vtn:resultType": ["person", "organization"],
   "vtn:typeMapping": [
     {
       "vtn:sourceType": { "@id": "https://example.org/ns#Artist" },

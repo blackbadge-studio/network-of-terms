@@ -29,28 +29,31 @@
   ],
   "genre": [
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Abstracte-begrippen"
+      "@id": "https://termennetwerk.meemoo.be/genres/concept"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Activiteiten"
+      "@id": "https://termennetwerk.meemoo.be/genres/abstracte-begrippen"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Fysieke-kenmerken"
+      "@id": "https://termennetwerk.meemoo.be/genres/activiteiten"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Materialen"
+      "@id": "https://termennetwerk.meemoo.be/genres/fysieke-kenmerken"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Objecten"
+      "@id": "https://termennetwerk.meemoo.be/genres/materialen"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Periodes"
+      "@id": "https://termennetwerk.meemoo.be/genres/objecten"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Stijlen"
+      "@id": "https://termennetwerk.meemoo.be/genres/periodes"
     },
     {
-      "@id": "https://data.cultureelerfgoed.nl/termennetwerk/onderwerpen/Technieken"
+      "@id": "https://termennetwerk.meemoo.be/genres/stijlen"
+    },
+    {
+      "@id": "https://termennetwerk.meemoo.be/genres/technieken"
     }
   ],
   "creator": [
@@ -80,7 +83,6 @@
   ],
   "inLanguage": ["en", "nl"],
   "license": "http://opendatacommons.org/licenses/by/1.0/",
-  "vtn:resultType": ["concept"],
   "distribution": [
     {
       "@id": "https://vocab.getty.edu/sparql#aat",
@@ -91,7 +93,7 @@
       "potentialAction": [
         {
           "@type": "SearchAction",
-          "query": "file://../../catalog/queries/search/aat.rq"
+          "query": "file://../queries/search/aat.rq"
         },
         {
           "@type": "FindAction",

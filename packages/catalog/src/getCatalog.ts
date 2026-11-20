@@ -9,12 +9,14 @@ import {
   Feature,
   FeatureType,
   Organization,
+  ResultType,
   SparqlDistribution,
   TypeMapping,
   resultTypeFromString,
 } from '@netwerk-digitaal-erfgoed/network-of-terms-query';
 import { fileURLToPath } from 'url';
-import { ldkit, rdf, schema, xsd } from 'ldkit/namespaces';
+import { ldkit, rdf, schema, skos, xsd } from 'ldkit/namespaces';
+import { Genre, registerGenres } from './genre.js';
 import { vtn } from './vocabulary.js';
 import { createLens, type IQueryEngine, type Options } from 'ldkit';
 import type RDF from '@rdfjs/types';
@@ -159,15 +161,10 @@ const distributionSchema = {
   },
 } as const;
 
-// Result types and type mappings get their own lens: both are multi-valued, so they would
-// multiply against the dataset's other multi-valued properties in the dataset lens.
+// Type mappings get their own lens: they are multi-valued, so they would multiply against the
+// dataset's other multi-valued properties in the dataset lens.
 const typesSchema = {
   '@type': schema.Dataset,
-  resultTypes: {
-    '@id': vtn.resultType,
-    '@array': true,
-    '@optional': true,
-  },
   typeMappings: {
     '@id': vtn.typeMapping,
     '@array': true,
@@ -179,6 +176,20 @@ const typesSchema = {
       },
       resultType: vtn.resultType,
     },
+  },
+} as const;
+
+// A catalog may carry its own genre list: SKOS concepts with a name per language. A genre that
+// stands for one of the central result types says which one (`vtn:resultType`).
+const genreSchema = {
+  '@type': skos.Concept,
+  name: {
+    '@id': skos.prefLabel,
+    '@multilang': true,
+  },
+  resultType: {
+    '@id': vtn.resultType,
+    '@optional': true,
   },
 } as const;
 
@@ -204,19 +215,25 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
       dataset.distribution,
     ]),
   );
-  const types = new Map(
+  const genres = await createLens(genreSchema, options).find();
+  registerGenres(genres.map((genre) => new Genre(genre.$id, genre.name)));
+  const genreTypes = new Map(
+    genres.flatMap((genre) =>
+      genre.resultType
+        ? [[genre.$id, resultTypeFromString(genre.resultType)] as const]
+        : [],
+    ),
+  );
+  const typeMappings = new Map(
     (await createLens(typesSchema, options).find()).map((dataset) => [
       dataset.$id,
-      {
-        resultTypes: (dataset.resultTypes ?? []).map(resultTypeFromString),
-        typeMappings: (dataset.typeMappings ?? []).map(
-          (mapping) =>
-            new TypeMapping(
-              mapping.sourceType,
-              resultTypeFromString(mapping.resultType),
-            ),
-        ),
-      },
+      (dataset.typeMappings ?? []).map(
+        (mapping) =>
+          new TypeMapping(
+            mapping.sourceType,
+            resultTypeFromString(mapping.resultType),
+          ),
+      ),
     ]),
   );
   const datasets = (await createLens(datasetSchema, options).find()).map(
@@ -224,7 +241,11 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
       ...dataset,
       creator: creators.get(dataset.$id),
       distribution: distributions.get(dataset.$id),
-      types: types.get(dataset.$id),
+      // A source yields the result types that its genres stand for, in the enum's order.
+      resultTypes: Object.values(ResultType).filter((type) =>
+        (dataset.genres ?? []).some((genre) => genreTypes.get(genre) === type),
+      ),
+      typeMappings: typeMappings.get(dataset.$id) ?? [],
     }),
   );
 
@@ -316,8 +337,8 @@ export async function fromStore(store: RDF.Store): Promise<Catalog> {
             })(),
           ],
           dataset.alternateName,
-          dataset.types?.resultTypes ?? [],
-          dataset.types?.typeMappings ?? [],
+          dataset.resultTypes,
+          dataset.typeMappings,
         ),
     ),
   );
