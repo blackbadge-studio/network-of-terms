@@ -23,9 +23,13 @@ CONSTRUCT {
     ?placeType_uri schema:name ?placeType_name .
 }
 WHERE {
+    # The languages the names, alternative names and notes are returned in. A place has a
+    # preferred name per language (Brussel, Brussels, Bruxelles, Brüssel).
     VALUES ?language {
         aat:300388256 # Dutch
         aat:300388277 # English
+        aat:300388306 # French
+        aat:300388344 # German
     }
     # For example: Ieper <http://vocab.getty.edu/tgn/7007856>
     VALUES ?uri { ?uris }
@@ -35,7 +39,15 @@ WHERE {
     # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
     # see “One UNION branch per multi-valued property” in the catalog README.
     {
-        { ?uri gvp:prefLabelGVP/skosxl:literalForm ?prefLabel . }
+        {
+            ?uri skosxl:prefLabel [
+                dcterms:language ?language ;
+                skosxl:literalForm ?prefLabel
+            ]
+        }
+        # Getty’s own preferred name, in the language it is in: the only name of a place that has
+        # none in the languages above.
+        UNION { ?uri gvp:prefLabelGVP/skosxl:literalForm ?prefLabel . }
         UNION {
             ?uri skosxl:altLabel [
                 dcterms:language ?language ;

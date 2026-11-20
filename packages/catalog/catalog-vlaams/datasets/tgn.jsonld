@@ -57,7 +57,7 @@
       "@value": "Huidige en historische plaatsnamen wereldwijd, met coördinaten, plaatstypes en de administratieve hiërarchie"
     }
   ],
-  "inLanguage": ["en", "nl"],
+  "inLanguage": ["nl", "en", "fr", "de"],
   "license": "http://opendatacommons.org/licenses/by/1.0/",
   "distribution": [
     {

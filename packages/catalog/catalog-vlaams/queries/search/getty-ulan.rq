@@ -47,7 +47,11 @@ WHERE {
     {
         { ?uri gvp:prefLabelGVP/skosxl:literalForm ?prefLabel . }
         UNION { ?uri skosxl:altLabel/skosxl:literalForm ?altLabel . }
-        UNION { ?uri foaf:focus/gvp:biographyPreferred/gschema:description ?biography . }
+        UNION {
+            # Getty writes this line in English without saying so; untagged it would pass for Dutch.
+            ?uri foaf:focus/gvp:biographyPreferred/gschema:description ?biographyText .
+            BIND(STRLANG(STR(?biographyText), "en") AS ?biography)
+        }
         UNION { ?uri rdfs:seeAlso ?rdfs_seeAlso . }
         UNION {
             ?uri skos:exactMatch ?exactMatch_uri .

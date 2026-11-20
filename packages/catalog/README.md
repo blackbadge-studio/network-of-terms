@@ -347,6 +347,28 @@ RKDartists are copies of the Dutch ones with the Flemish genre URIs in them
 (`catalog-vlaams/queries/search/aat.rq`, `rkdartists.rq`): a change to the Dutch template is made
 there too.
 
+### Languages
+
+A source is listed with the languages it offers names and descriptions in (`schema:inLanguage`), and
+its templates return every label with its language tag. Nothing is translated: a client asks for
+labels in the languages it wants (`languages`) and gets the ones the source has.
+
+For a source in the Flemish catalog this means:
+
+- its search template searches the labels in all of its languages, so the English `dress` finds
+  the garments a Dutch-speaking cataloguer would look for under another word;
+- a label is returned in the language the source gives it. A label without a language is read as
+  Dutch, so a template tags text that it knows to be in another language (ULAN’s biography line is
+  English: `STRLANG(STR(?text), "en")`);
+- a source with a name per language returns each of them, not only its own preferred name (TGN:
+  `skosxl:prefLabel` per language, for Dutch, English, French and German).
+
+The languages of all sources together are the values of the `Language` enum in the GraphQL schema:
+adding a language to a source’s `inLanguage` is what makes it possible to ask for it. The catalog
+itself describes its sources (name, description) in Dutch and English. A request for labels in
+another language gets those descriptions in the first of its languages the catalog is written in,
+and otherwise in the language of the request (`Accept-Language`).
+
 ### Hierarchical navigation (`vtn:BrowseAction`)
 
 A concept thesaurus can declare a third template next to search and lookup:
