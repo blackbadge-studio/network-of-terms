@@ -28,6 +28,10 @@
       "title": "Hiërarchie"
     },
     {
+      "id": "talen",
+      "title": "Meertaligheid"
+    },
+    {
       "id": "status",
       "title": "Bronstatus"
     },
@@ -642,6 +646,316 @@
       "query": "{ browse(source: \"https://data.rkd.nl/rkdartists\") { uri } }",
       "checks": [],
       "expectError": true
+    },
+    {
+      "id": "API-44",
+      "area": "talen",
+      "title": "Art & Architecture Thesaurus: Nederlands en Engels",
+      "what": "We zoeken het Engelse woord “lace” in de AAT. Elke term komt terug met zijn Nederlandse en zijn Engelse naam, en bij elke naam staat de taal.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"http://vocab.getty.edu/aat\"], query: \"lace\", languages: [nl, en], limit: 5) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Er is een Nederlandse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "nl"
+        },
+        {
+          "label": "Er is een Engelse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "en"
+        },
+        {
+          "label": "Zoeken op het Engelse woord vindt de Nederlandse naam met “kant”",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].value",
+          "some": true,
+          "contains": "kant"
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "id": "API-45",
+      "area": "talen",
+      "title": "Modethesaurus van het MoMu: Nederlands en Engels",
+      "what": "We zoeken het Engelse woord “dress” in de modethesaurus. De bron zoekt in beide talen en geeft bij elke term de Nederlandse en de Engelse naam.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"https://vtmk.data.momu.be/id/100001\"], query: \"dress\", languages: [nl, en], limit: 5) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Er is een Nederlandse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "nl"
+        },
+        {
+          "label": "Er is een Engelse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "en"
+        },
+        {
+          "label": "Zoeken op het Engelse woord vindt een Nederlandse naam met “kleding”",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].value",
+          "some": true,
+          "contains": "kleding"
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "id": "API-46",
+      "area": "talen",
+      "title": "Getty TGN: plaatsnamen in vier talen",
+      "what": "We zoeken de Franse naam “Ypres” en vragen de namen in het Frans, Duits, Nederlands en Engels. Ieper komt terug met zijn naam in elk van die talen.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"http://vocab.getty.edu/tgn\"], query: \"Ypres\", languages: [fr, de, nl, en], limit: 3) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Zoeken op de Franse naam vindt “Ieper”",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].value",
+          "some": true,
+          "contains": "Ieper"
+        },
+        {
+          "label": "Er is een Nederlandse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "nl"
+        },
+        {
+          "label": "Er is een Franse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "fr"
+        },
+        {
+          "label": "Er is een Duitse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "de"
+        },
+        {
+          "label": "Er is een Engelse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "en"
+        },
+        {
+          "label": "De naam van de bron staat erbij, ook nu Frans de eerste gevraagde taal is",
+          "path": "data.terms[0].source.name",
+          "exists": true
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "id": "API-47",
+      "area": "talen",
+      "title": "Getty ULAN: namen met een taal, levensbeschrijving in het Engels",
+      "what": "We zoeken “Rubens” in de kunstenaarsnamen van Getty. Bij elke naam staat een taal, en de korte levensbeschrijving is als Engels gemarkeerd, de taal waarin Getty ze schrijft.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"http://vocab.getty.edu/ulan\"], query: \"Rubens\", languages: [nl, en], limit: 5) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } scopeNote { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Bij elke naam staat een taal",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "oneOf": ["nl", "en"]
+        },
+        {
+          "label": "Er is minstens één levensbeschrijving",
+          "count": "data.terms[0].result.terms[*].scopeNote[*]",
+          "min": 1
+        },
+        {
+          "label": "Elke levensbeschrijving is als Engels gemarkeerd",
+          "path": "data.terms[0].result.terms[*].scopeNote[*].language",
+          "oneOf": ["en"]
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "id": "API-48",
+      "area": "talen",
+      "title": "RKDartists: beschrijving in het Nederlands en het Engels",
+      "what": "We zoeken “Rubens” in RKDartists. Een naam van een persoon heeft geen taal, maar de beschrijving komt in het Nederlands en in het Engels terug.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"https://data.rkd.nl/rkdartists\"], query: \"Rubens\", languages: [nl, en], limit: 5) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } scopeNote { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Er is een Nederlandse beschrijving",
+          "path": "data.terms[0].result.terms[*].scopeNote[*].language",
+          "some": true,
+          "equals": "nl"
+        },
+        {
+          "label": "Er is een Engelse beschrijving",
+          "path": "data.terms[0].result.terms[*].scopeNote[*].language",
+          "some": true,
+          "equals": "en"
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "id": "API-49",
+      "area": "talen",
+      "title": "Wikidata, alle entiteiten: Nederlands en Engels",
+      "what": "We zoeken het Engelse woord “lace” in heel Wikidata. De resultaten komen terug met hun Nederlandse en hun Engelse naam.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"https://www.wikidata.org#alle-entiteiten\"], query: \"lace\", languages: [nl, en], limit: 5) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Er is een Nederlandse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "nl"
+        },
+        {
+          "label": "Er is een Engelse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "en"
+        },
+        {
+          "label": "Zoeken op het Engelse woord vindt de Nederlandse naam “kant”",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].value",
+          "some": true,
+          "contains": "kant"
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "id": "API-50",
+      "area": "talen",
+      "title": "Wikidata, personen: Nederlands en Engels",
+      "what": "We zoeken “Rubens” bij de personen uit Wikidata. Rubens komt terug als “Pieter Paul Rubens” in het Nederlands en als “Peter Paul Rubens” in het Engels.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-personen\"], query: \"Rubens\", languages: [nl, en], limit: 5) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Er is een Nederlandse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "nl"
+        },
+        {
+          "label": "Er is een Engelse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "en"
+        },
+        {
+          "label": "De Nederlandse naam “Pieter Paul Rubens” staat erbij",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].value",
+          "some": true,
+          "contains": "Pieter Paul Rubens"
+        },
+        {
+          "label": "De Engelse naam “Peter Paul Rubens” staat erbij",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].value",
+          "some": true,
+          "contains": "Peter Paul Rubens"
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "id": "API-51",
+      "area": "talen",
+      "title": "Wikidata, plaatsen: Nederlands en Engels",
+      "what": "We zoeken de Engelse naam “Ypres” bij de plaatsen uit Wikidata. De stad komt terug met haar Nederlandse naam “Ieper” en haar Engelse naam.",
+      "requirement": ["F2.19", "§3.1 meertaligheid"],
+      "kind": "graphql",
+      "query": "{ terms(sources: [\"https://www.wikidata.org#vlaanderen-plaatsen\"], query: \"Ypres\", languages: [nl, en], limit: 5) { source { name } result { __typename ... on TranslatedTerms { terms { uri prefLabel { language value } } } ... on Error { message } } } }",
+      "checks": [
+        {
+          "label": "De bron geeft resultaten terug, geen foutmelding",
+          "path": "data.terms[0].result.__typename",
+          "equals": "TranslatedTerms"
+        },
+        {
+          "label": "Er is een Nederlandse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "nl"
+        },
+        {
+          "label": "Er is een Engelse naam",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].language",
+          "some": true,
+          "equals": "en"
+        },
+        {
+          "label": "Zoeken op de Engelse naam vindt “Ieper”",
+          "path": "data.terms[0].result.terms[*].prefLabel[*].value",
+          "some": true,
+          "contains": "Ieper"
+        }
+      ],
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
     },
     {
       "id": "API-19",
