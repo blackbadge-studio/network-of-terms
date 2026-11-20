@@ -7,7 +7,6 @@ import {
   SparqlDistribution,
   TypeMapping,
   additionalTypes,
-  matchesResultTypes,
   resultTypeFromString,
   resultTypeOf,
 } from '../src/index.js';
@@ -118,33 +117,6 @@ describe('resultTypeOf', () => {
         dataset([ResultType.PERSON, ResultType.ORGANIZATION]),
       ),
     ).toBe(ResultType.CONCEPT);
-  });
-});
-
-describe('type filter', () => {
-  it('passes everything when no types are requested', () => {
-    expect(matchesResultTypes(typed('https://schema.org/Person'), [])).toBe(
-      true,
-    );
-  });
-
-  it('matches the derived result type', () => {
-    const term = typed('https://schema.org/Person');
-    expect(matchesResultTypes(term, [ResultType.PERSON])).toBe(true);
-    expect(matchesResultTypes(term, [ResultType.PLACE])).toBe(false);
-  });
-
-  it('decides per source whether it may provide the requested types', () => {
-    expect(dataset().mayProvideResultTypes([ResultType.PERSON])).toBe(true);
-    expect(
-      dataset([ResultType.CONCEPT]).mayProvideResultTypes([ResultType.PERSON]),
-    ).toBe(false);
-    expect(
-      dataset([ResultType.CONCEPT, ResultType.PERSON]).mayProvideResultTypes([
-        ResultType.PERSON,
-      ]),
-    ).toBe(true);
-    expect(dataset([ResultType.CONCEPT]).mayProvideResultTypes([])).toBe(true);
   });
 });
 

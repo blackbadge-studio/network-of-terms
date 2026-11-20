@@ -733,21 +733,19 @@ describe('Server', () => {
     );
   });
 
-  it('types every term and filters on result type', async () => {
-    const search = (types?: string) =>
-      query(
-        `
+  it('types every term', async () => {
+    const all = await query(
+      `
         query {
-          terms(sources: ["https://data.rkd.nl/rkdartists"], query: "rembrandt"${types ? `, types: [${types}]` : ''}) {
-            source { uri resultTypes }
+          terms(sources: ["https://data.rkd.nl/rkdartists"], query: "rembrandt") {
+            source { uri }
             result {
               ... on Terms { terms { uri resultType additionalType } }
             }
           }
         }
       `,
-      );
-    const all = await search();
+    );
     const terms = all.data.terms[0].result.terms;
     expect(terms.length).toBeGreaterThan(0);
     const persons = terms.filter(
@@ -758,19 +756,20 @@ describe('Server', () => {
     expect(persons[0].additionalType).toContain(
       'http://www.w3.org/2004/02/skos/core#Concept',
     );
-    // The test catalog declares no result types, so the source is queried and filtered per term.
-    expect(all.data.terms[0].source.resultTypes).toEqual([]);
+  });
 
-    const onlyPersons = await search('PERSON');
-    expect(onlyPersons.data.terms[0].result.terms).toHaveLength(persons.length);
-    const onlyPlaces = await search('PLACE');
-    expect(
-      onlyPlaces.data.terms[0].result.terms.every(
-        (term: { resultType: string }) => term.resultType === 'PLACE',
-      ),
-    ).toBe(true);
-    expect(onlyPlaces.data.terms[0].result.terms.length).toBeLessThan(
-      terms.length,
+  it('has no types argument: a result type is asked for as a genre', async () => {
+    const response = await httpServer.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: { 'Content-Type': 'application/json' },
+      payload: {
+        query: `query { terms(sources: ["https://data.rkd.nl/rkdartists"], query: "rembrandt", types: [PERSON]) { source { uri } } }`,
+      },
+    });
+    expect(response.statusCode).toEqual(400);
+    expect(response.json().errors[0].message).toContain(
+      'Unknown argument "types"',
     );
   });
 

@@ -785,7 +785,7 @@
       "id": "API-25",
       "area": "docs",
       "title": "Schema beschrijft resultaatstypes, filters en foutcodes",
-      "what": "De API beschrijft zichzelf. We controleren dat de types, het filter en de foutmeldingen in die beschrijving staan.",
+      "what": "De API beschrijft zichzelf. We controleren dat de types, het filter en de foutmeldingen in die beschrijving staan, en dat er voor het type geen apart filter naast dat van Nederland bestaat.",
       "requirement": ["F11.1", "F11.2", "F4.12"],
       "kind": "graphql",
       "query": "{ __schema { types { name } } __type(name: \"Query\") { fields { name args { name } } } }",
@@ -813,6 +813,11 @@
           "path": "data.__type.fields[*].args[*].name",
           "some": true,
           "equals": "genres"
+        },
+        {
+          "label": "Er is geen eigen argument ‘types’: een type vraag je als genre, zoals in Nederland",
+          "path": "data.__type.fields[*].args[*].name",
+          "notContains": "types"
         }
       ]
     },

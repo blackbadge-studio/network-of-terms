@@ -27,7 +27,6 @@ import {
   ResultType,
   Terms,
   additionalTypes,
-  matchesResultTypes,
   resultTypeOf,
 } from '@netwerk-digitaal-erfgoed/network-of-terms-query';
 import * as RDF from '@rdfjs/types';
@@ -67,21 +66,12 @@ async function queryTerms(
     limit: number;
     timeoutMs: number;
     languages: string[];
-    types?: string[];
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: any,
 ): Promise<unknown> {
   const catalog: Catalog = context.catalog;
-  const types = (args.types ?? []).map(resultTypeFromEnum);
-  // A source that declares its result types and offers none of the requested ones is skipped.
-  const sources = args.sources.filter((source) => {
-    const dataset = catalog.getDatasetByIri(source);
-    return dataset === undefined || dataset.mayProvideResultTypes(types);
-  });
-  if (sources.length === 0) {
-    return [];
-  }
+  const sources = args.sources;
   const started = performance.now();
   const catalogLanguage = [
     ...(args.languages ?? []),
@@ -97,7 +87,6 @@ async function queryTerms(
       args.limit,
       args.genres ?? null,
       args.languages ?? null,
-      types,
     ]);
 
   // Cached sources first; only the rest are queried live.
@@ -120,16 +109,14 @@ async function queryTerms(
       logger: context.app.log,
       catalog,
     });
-    const responses = (
-      await service.queryAll({
-        sources: misses,
-        genres: args.genres,
-        query: args.query,
-        queryMode: QueryMode[args.queryMode as keyof typeof QueryMode],
-        limit: args.limit,
-        timeoutMs: args.timeoutMs,
-      })
-    ).map((response) => filterByResultTypes(response, types, catalog));
+    const responses = await service.queryAll({
+      sources: misses,
+      genres: args.genres,
+      query: args.query,
+      queryMode: QueryMode[args.queryMode as keyof typeof QueryMode],
+      limit: args.limit,
+      timeoutMs: args.timeoutMs,
+    });
     const resolved = resolveTermsResponse(
       responses,
       catalog,
@@ -377,31 +364,8 @@ const datasetOf = (catalog: Catalog, distribution: Distribution) =>
   catalog.getDatasetByDistributionIri(distribution.iri);
 
 /** GraphQL enum names are upper case; the query package uses the lower-case catalog values. */
-const resultTypeFromEnum = (name: string): ResultType =>
-  ResultType[name as keyof typeof ResultType];
 const resultTypeToEnum = (type: ResultType): string =>
   Object.entries(ResultType).find(([, value]) => value === type)![0];
-
-/** Keep only the terms of the requested result types; errors pass through untouched. */
-function filterByResultTypes(
-  response: TermsResponse,
-  types: ResultType[],
-  catalog: Catalog,
-): TermsResponse {
-  if (types.length === 0 || !(response.result instanceof Terms)) {
-    return response;
-  }
-  const dataset = datasetOf(catalog, response.result.distribution);
-  return new TermsResponse(
-    new Terms(
-      response.result.distribution,
-      response.result.terms.filter((term) =>
-        matchesResultTypes(term, types, dataset),
-      ),
-    ),
-    response.responseTimeMs,
-  );
-}
 
 function mapToTranslatedTerm(
   term: Term,
@@ -665,7 +629,6 @@ function source(
       url: feature.url?.toString() ?? null,
     })),
     status: statusClient?.getStatus(dataset.iri) ?? null,
-    resultTypes: dataset.resultTypes.map(resultTypeToEnum),
     timeoutMs: distribution.timeoutMs ?? null,
   };
 }

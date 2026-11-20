@@ -20,7 +20,7 @@ const builtInMapping: ReadonlyMap<string, ResultType> = new Map([
 
 /**
  * The central result type of a term: the source's own type mapping first, then the built-in
- * mapping of well-known classes, then the single type the source declares for all its terms, and
+ * mapping of well-known classes, then the single type the source's genres stand for, and
  * `concept` when nothing says otherwise. The term's `rdf:type`s stay available unchanged as
  * {@link additionalTypes}.
  */
@@ -48,13 +48,4 @@ export function resultTypeOf(
 /** The term's `rdf:type`s as the source states them. */
 export function additionalTypes(term: { types: RDF.Term[] }): string[] {
   return term.types.map((type) => type.value);
-}
-
-/** Whether the term passes a type filter; an empty filter passes everything. */
-export function matchesResultTypes(
-  term: { types: RDF.Term[] },
-  types: ResultType[],
-  dataset?: Dataset,
-): boolean {
-  return types.length === 0 || types.includes(resultTypeOf(term, dataset));
 }
