@@ -14,61 +14,23 @@ CONSTRUCT {
         rdfs:seeAlso ?odis .
 }
 WHERE {
+    # With the optimizer off the patterns run as written, from the given URIs. Left to itself
+    # Blazegraph starts the type checks at the classes and scans every human in Wikidata.
+    hint:Query hint:optimizer "None" .
+
     # For example:
     # Person: <http://www.wikidata.org/entity/Q5599> (Rubens)
     # Place: <http://www.wikidata.org/entity/Q12990> (Ieper)
-    {
-        SELECT ?uri ?type WHERE {
-            {
-                SELECT ?uri (COALESCE(MAX(?rank), 0) AS ?best) WHERE {
-                    # With the optimizer off the patterns run as written, from the given URIs.
-                    # Left to itself Blazegraph starts at the classes and scans every human in
-                    # Wikidata.
-                    hint:Query hint:optimizer "None" .
-                    VALUES ?uri { ?uris }
+    VALUES ?uri { ?uris }
 
-                    # ‘mul’ is Wikidata’s ‘default for all languages’ label. A plain pattern and
-                    # not FILTER EXISTS: Blazegraph runs that filter before it knows the URIs.
-                    ?uri rdfs:label ?label .
-                    FILTER(LANG(?label) IN ("nl", "en", "mul"))
-
-                    # The same check as in the search template (wikidata-alle-entiteiten.rq), so
-                    # a term is of the same type whether it was searched for or looked up.
-                    OPTIONAL {
-                        VALUES (?class ?rank) {
-                            (wd:Q5 4)
-                            (wd:Q2221906 3)
-                            (wd:Q43229 2)
-                            (wd:Q1190554 1)
-                        }
-                        { ?uri wdt:P31 ?class . }
-                        UNION { ?uri wdt:P31/wdt:P279 ?class . }
-                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279 ?class . }
-                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279 ?class . }
-                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
-                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
-                        UNION { ?uri wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279 ?class . }
-                    }
-                }
-                GROUP BY ?uri
-            }
-            VALUES (?best ?type) {
-                (4 schema:Person)
-                (3 schema:Place)
-                (2 schema:Organization)
-                (1 schema:Event)
-                (0 skos:Concept)
-            }
-        }
-    }
+    # ‘mul’ is Wikidata’s ‘default for all languages’ label.
+    ?uri rdfs:label ?prefLabel .
+    FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
 
     # One UNION branch per independently multi-valued property, and not an OPTIONAL group:
     # see “One UNION branch per multi-valued property” in the catalog README.
     {
-        {
-            ?uri rdfs:label ?prefLabel .
-            FILTER(LANG(?prefLabel) IN ("nl", "en", "mul"))
-        }
+        { ?uri rdfs:label ?prefLabel }
         UNION {
             ?uri skos:altLabel ?altLabel .
             FILTER(LANG(?altLabel) IN ("nl", "en", "mul"))
@@ -76,6 +38,38 @@ WHERE {
         UNION {
             ?uri schema:description ?description .
             FILTER(LANG(?description) IN ("nl", "en"))
+        }
+        # The type, by the same rule as the search template (wikidata-alle-entiteiten.rq), so a term
+        # is of the same type whether it was searched for or looked up: what the item is an
+        # instance of, up to six subclass steps away, is human (Q5), else geographic location
+        # (Q2221906), else organization (Q43229), else occurrence (Q1190554); what is none of
+        # these stays a concept. A person is settled by the first branch alone: walking up from
+        # ‘human’ for the other three took five to ten seconds per lookup. The paths have a fixed
+        # number of steps and not wdt:P279*, which Blazegraph runs many times slower.
+        UNION {
+            ?uri wdt:P31 wd:Q5 .
+            BIND(schema:Person AS ?type)
+        }
+        UNION {
+            ?uri wdt:P31 ?class .
+            FILTER NOT EXISTS { ?uri wdt:P31 wd:Q5 }
+            FILTER EXISTS { ?uri (wdt:P31|wdt:P31/wdt:P279|wdt:P31/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279) wd:Q2221906 }
+            BIND(schema:Place AS ?type)
+        }
+        UNION {
+            ?uri wdt:P31 ?class .
+            FILTER NOT EXISTS { ?uri wdt:P31 wd:Q5 }
+            FILTER NOT EXISTS { ?uri (wdt:P31|wdt:P31/wdt:P279|wdt:P31/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279) wd:Q2221906 }
+            FILTER EXISTS { ?uri (wdt:P31|wdt:P31/wdt:P279|wdt:P31/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279) wd:Q43229 }
+            BIND(schema:Organization AS ?type)
+        }
+        UNION {
+            ?uri wdt:P31 ?class .
+            FILTER NOT EXISTS { ?uri wdt:P31 wd:Q5 }
+            FILTER NOT EXISTS { ?uri (wdt:P31|wdt:P31/wdt:P279|wdt:P31/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279) wd:Q2221906 }
+            FILTER NOT EXISTS { ?uri (wdt:P31|wdt:P31/wdt:P279|wdt:P31/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279) wd:Q43229 }
+            FILTER EXISTS { ?uri (wdt:P31|wdt:P31/wdt:P279|wdt:P31/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279|wdt:P31/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279/wdt:P279) wd:Q1190554 }
+            BIND(schema:Event AS ?type)
         }
         UNION {
             ?uri wdt:P214 ?viafId .
